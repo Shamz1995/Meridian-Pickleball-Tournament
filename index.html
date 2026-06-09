@@ -729,6 +729,7 @@ let courtGameState = { courtA: { server: null, serverPlayer: null, serveNum: 1 }
 let courtHistory = { courtA: [], courtB: [] };
 let matchDetails = {};
 let pendingServePick = null;
+let pendingSideoutPick = null;
 
 const ADMIN_KEY = 'pickleball2024'; // change this to your secret
 const isAdmin = location.hash === '#' + ADMIN_KEY;
@@ -1145,7 +1146,6 @@ function doSideout(cat, mid) {
   if (st.server === null) st.server = 0;
   st.server = st.server === 0 ? 1 : 0;
   st.serveNum = 1;
-  st.serverPlayer = 0;
   if (!courtHistory[court]) courtHistory[court] = [];
   courtHistory[court].push({ type: 'sideout', time: Date.now() });
   if (courtHistory[court].length > 50) courtHistory[court].splice(0, courtHistory[court].length - 50);
@@ -1154,6 +1154,8 @@ function doSideout(cat, mid) {
   matchDetails[id].timeline.push({ type: 'sideout', team: st.server, player: 0, serveNum: 1, time: Date.now() });
   if (matchDetails[id].timeline.length > 200) matchDetails[id].timeline.splice(0, matchDetails[id].timeline.length - 200);
   playBeep();
+  var match = getMatchForCat(cat, mid);
+  pendingSideoutPick = { court: court, cat: cat, mid: mid, teamIdx: st.server === 0 ? match.t1 : match.t2 };
   renderAll();
   sendStateToSupabase();
 }
@@ -1242,6 +1244,20 @@ function beginMatch(teamIdx, playerIdx) {
 function cancelServePick() {
   pendingServePick = null;
   renderLive();
+}
+
+function pickSideoutPlayer(playerIdx) {
+  if (!pendingSideoutPick) return;
+  var p = pendingSideoutPick;
+  pendingSideoutPick = null;
+  var st = courtGameState[p.court];
+  st.serverPlayer = playerIdx;
+  var match = getMatchForCat(p.cat, p.mid);
+  var id = getMatchId(p.cat, p.mid);
+  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [] };
+  matchDetails[id].timeline.push({ type: 'serve', team: p.teamIdx, player: playerIdx, serveNum: 1, time: Date.now() });
+  sendStateToSupabase();
+  renderAll();
 }
 
 function resetCourtTimer(court) {
@@ -1496,6 +1512,17 @@ function renderLive() {
           + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
           + '</div></div>';
       }
+    }
+
+    // Sideout player picker
+    if (!pickHtml && pendingSideoutPick && pendingSideoutPick.court === courtKey && pendingSideoutPick.cat === cat && pendingSideoutPick.mid === match.id) {
+      var sopTeamColor = pendingSideoutPick.teamIdx === match.t1 ? c1 : c2;
+      var sopPlayers = getMatchPlayers(cat, match, pendingSideoutPick.teamIdx);
+      pickHtml = '<div class="serve-picker"><div class="serve-picker-label">Who serves (1st serve)?</div>'
+        + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
+        + '<button class="btn" onclick="pickSideoutPlayer(0)" style="background:' + sopTeamColor + '22;color:' + sopTeamColor + ';border:2px solid ' + sopTeamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(sopPlayers[0]) + '</button>'
+        + '<button class="btn" onclick="pickSideoutPlayer(1)" style="background:' + sopTeamColor + '22;color:' + sopTeamColor + ';border:2px solid ' + sopTeamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(sopPlayers[1]) + '</button>'
+        + '</div></div>';
     }
 
     var courtBg = 'linear-gradient(135deg, ' + c1 + '08 0%, var(--bg2) 40%, ' + c2 + '08 100%)';
@@ -1846,7 +1873,7 @@ function showPage(id) {
 function resetTournament() {
   if (!isAdmin || !confirm('Reset tournament? All scores and schedule will be lost.')) return;
   teams = []; schedule = { mens: [], mixed: [] }; scores = { mens: {}, mixed: {} };
-  combinedSlots = []; champPairs = { mens: {}, mixed: {} }; champScores = { mens: null, mixed: null }; courtTimers = { courtA: { startTime: null }, courtB: { startTime: null } }; courtGameState = { courtA: { server: null, serverPlayer: null, serveNum: 1 }, courtB: { server: null, serverPlayer: null, serveNum: 1 } }; courtHistory = { courtA: [], courtB: [] }; matchDetails = {}; pendingServePick = null;
+  combinedSlots = []; champPairs = { mens: {}, mixed: {} }; champScores = { mens: null, mixed: null }; courtTimers = { courtA: { startTime: null }, courtB: { startTime: null } }; courtGameState = { courtA: { server: null, serverPlayer: null, serveNum: 1 }, courtB: { server: null, serverPlayer: null, serveNum: 1 } }; courtHistory = { courtA: [], courtB: [] }; matchDetails = {}; pendingServePick = null; pendingSideoutPick = null;
   document.getElementById('page-tournament').classList.remove('active');
   document.getElementById('page-setup').classList.add('active');
   sendStateToSupabase();
@@ -2008,6 +2035,7 @@ function applyState(d) {
   courtHistory = d.courtHistory || { courtA: [], courtB: [] };
   matchDetails = d.matchDetails || {};
   pendingServePick = null;
+  pendingSideoutPick = null;
   if (teams.length > 0) {
     var wasSetup = document.getElementById('page-setup').classList.contains('active');
     document.getElementById('page-setup').classList.remove('active');
