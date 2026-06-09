@@ -636,8 +636,8 @@
   .serve-picker-label { font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px; }
   .match-timeline { display:none;margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--radius-md);font-size:11px;max-height:200px;overflow-y:auto; }
   .match-timeline .tl-item { display:flex;align-items:center;gap:4px;padding:2px 0; }
-  .match-timeline .tl-time { color:var(--text3);min-width:32px; }
-  .match-timeline .tl-dot { width:6px;height:6px;border-radius:50%;display:inline-block; }
+  .match-timeline .tl-time { font-size:10px;color:var(--text3);margin-left:auto;white-space:nowrap; }
+  .match-timeline .tl-dot { width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0; }
   .match-timeline-wrap { text-align:center; }
   .match-timeline.open { display:block; }
   .live-empty { text-align: center; padding: 40px 0; color: var(--text3); }
@@ -1077,7 +1077,7 @@ function changeScore(cat, mid, side, delta) {
   if (nxt > cur) {
     addPointToHistory(cat, mid, teamIdx);
     var id = getMatchId(cat, mid);
-    if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [] };
+    if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
     matchDetails[id].timeline.push({ type: 'point', team: teamIdx, player: gs ? gs.serverPlayer : null, serveNum: gs ? gs.serveNum : 1, time: Date.now() });
     if (matchDetails[id].timeline.length > 200) matchDetails[id].timeline.splice(0, matchDetails[id].timeline.length - 200);
     playBeep();
@@ -1150,14 +1150,24 @@ function doSideout(cat, mid) {
   courtHistory[court].push({ type: 'sideout', time: Date.now() });
   if (courtHistory[court].length > 50) courtHistory[court].splice(0, courtHistory[court].length - 50);
   var id = getMatchId(cat, mid);
-  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [] };
+  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
   matchDetails[id].timeline.push({ type: 'sideout', team: st.server, player: 0, serveNum: 1, time: Date.now() });
   if (matchDetails[id].timeline.length > 200) matchDetails[id].timeline.splice(0, matchDetails[id].timeline.length - 200);
   playBeep();
   var match = getMatchForCat(cat, mid);
-  pendingSideoutPick = { court: court, cat: cat, mid: mid, teamIdx: st.server === 0 ? match.t1 : match.t2 };
-  renderAll();
-  sendStateToSupabase();
+  var teamIdx = st.server === 0 ? match.t1 : match.t2;
+  if (matchDetails[id].firstServerOfTeam && matchDetails[id].firstServerOfTeam[teamIdx] !== undefined) {
+    var e = scores[cat][mid] || { s1: 0, s2: 0 };
+    var teamScore = teamIdx === match.t1 ? (e.s1 || 0) : (e.s2 || 0);
+    var firstServer = matchDetails[id].firstServerOfTeam[teamIdx];
+    st.serverPlayer = (teamScore % 2 === 0) ? firstServer : (1 - firstServer);
+    renderAll();
+    sendStateToSupabase();
+  } else {
+    pendingSideoutPick = { court: court, cat: cat, mid: mid, teamIdx: teamIdx };
+    renderAll();
+    sendStateToSupabase();
+  }
 }
 
 function addPointToHistory(cat, mid, teamIdx) {
@@ -1198,7 +1208,7 @@ function getMatchId(cat, mid) { return cat + '-' + mid; }
 
 function recordServeChange(cat, mid, court, server, serveNum, playerIdx) {
   var id = getMatchId(cat, mid);
-  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [] };
+  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
   matchDetails[id].timeline.push({ type: 'serve', team: server, player: playerIdx, serveNum: serveNum, time: Date.now() });
   if (matchDetails[id].timeline.length > 200) matchDetails[id].timeline.splice(0, matchDetails[id].timeline.length - 200);
 }
@@ -1232,8 +1242,9 @@ function beginMatch(teamIdx, playerIdx) {
   st.serveNum = 2;
   courtTimers[court].startTime = Date.now();
   var id = getMatchId(cat, mid);
-  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [] };
+  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
   matchDetails[id].serverFirst = { team: teamIdx, player: playerIdx };
+  matchDetails[id].firstServerOfTeam[teamIdx] = playerIdx;
   matchDetails[id].timerStart = courtTimers[court].startTime;
   matchDetails[id].timeline.push({ type: 'serve', team: teamIdx, player: playerIdx, serveNum: 2, time: Date.now() });
   sendStateToSupabase();
@@ -1254,7 +1265,8 @@ function pickSideoutPlayer(playerIdx) {
   st.serverPlayer = playerIdx;
   var match = getMatchForCat(p.cat, p.mid);
   var id = getMatchId(p.cat, p.mid);
-  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [] };
+  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
+  matchDetails[id].firstServerOfTeam[p.teamIdx] = playerIdx;
   matchDetails[id].timeline.push({ type: 'serve', team: p.teamIdx, player: playerIdx, serveNum: 1, time: Date.now() });
   sendStateToSupabase();
   renderAll();
@@ -1275,7 +1287,7 @@ function autoStopTimer(cat, mid) {
   var dur = Math.floor((Date.now() - ct.startTime) / 1000);
   ct.startTime = null;
   var id = getMatchId(cat, mid);
-  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [] };
+  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
   matchDetails[id].duration = dur;
   matchDetails[id].timeline.push({ type: 'match_end', time: Date.now() });
 }
@@ -1336,6 +1348,12 @@ function matchCell(match, cat) {
   + '</td>';
 }
 
+function formatTime(ts) {
+  if (!ts) return '';
+  var d = new Date(ts);
+  return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2);
+}
+
 function matchTimelineHtml(cat, mid, match) {
   var id = getMatchId(cat, mid);
   var md = matchDetails[id];
@@ -1368,7 +1386,7 @@ function matchTimelineHtml(cat, mid, match) {
       label = 'Match ended';
       color = 'var(--text3)';
     } else return '';
-    return '<div class="tl-item"><span class="tl-dot" style="background:' + color + '"></span><span>' + label + '</span></div>';
+    return '<div class="tl-item"><span class="tl-dot" style="background:' + color + '"></span><span>' + label + '</span><span class="tl-time">' + formatTime(ev.time) + '</span></div>';
   }).join('');
   return '<div class="match-timeline-wrap"><button class="btn btn-sm tl-toggle" onclick="this.nextElementSibling.classList.toggle(\'open\');this.textContent=this.nextElementSibling.classList.contains(\'open\')?\'Hide timeline\':\'View timeline\'" style="font-size:10px;padding:2px 8px;margin-top:6px"><i class="ti ti-list"></i> View timeline</button><div class="match-timeline"><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Server first: ' + firstStr + durStr + '</div>' + items + '</div></div>';
 }
