@@ -1484,7 +1484,9 @@ function printPDF() {
   w.document.close();
 }
 
-// --- State sync helpers ---
+// --- Supabase sync via REST API (no SDK needed) ---
+var POLL_INTERVAL = 2000; // viewers check for updates every 2s
+
 function applyState(d) {
   teams = d.teams || [];
   schedule = d.schedule || { mens: [], mixed: [] };
@@ -1500,64 +1502,59 @@ function applyState(d) {
   }
 }
 
-// Admin sends state to Supabase; viewers receive it in real-time
-var _sendState = function() {};
+async function fetchState() {
+  try {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/tournament_state?id=eq.1&select=data', {
+      headers: { 'apikey': SUPABASE_ANON_KEY }
+    });
+    var json = await res.json();
+    if (json.length > 0 && json[0].data && json[0].data.teams && json[0].data.teams.length > 0) {
+      applyState(json[0].data);
+    }
+  } catch(e) {}
+}
 
-function sendState() { _sendState(); }
+async function sendStateToSupabase() {
+  try {
+    var state = { teams: teams, schedule: schedule, scores: scores, combinedSlots: combinedSlots, champPairs: champPairs, champScores: champScores };
+    await fetch(SUPABASE_URL + '/rest/v1/tournament_state?id=eq.1', {
+      method: 'PUT',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ data: state })
+    });
+  } catch(e) {}
+}
 
 // Override data-modifying functions to broadcast changes
 var _origGenerate = generateTournament;
 generateTournament = function() {
   _origGenerate();
-  sendState();
+  sendStateToSupabase();
 };
 
 var _origSetScore = setScore;
 setScore = function(cat, mid, side, value) {
   _origSetScore(cat, mid, side, value);
-  sendState();
+  sendStateToSupabase();
 };
 
 var _origSetChampPlayer = setChampPlayer;
 setChampPlayer = function(cat, side, slot, value) {
   _origSetChampPlayer(cat, side, slot, value);
-  sendState();
+  sendStateToSupabase();
 };
 
 var _origSetChampScore = setChampScore;
 setChampScore = function(cat, side, value) {
   _origSetChampScore(cat, side, value);
-  sendState();
+  sendStateToSupabase();
 };
 
-// Initialize Supabase and start listening
-(async function initSupabase() {
-  var mod = await import('https://esm.sh/@supabase/supabase-js@2');
-  var supabase = mod.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  // Fetch existing state
-  var res = await supabase.from('tournament_state').select('data').eq('id', 1).single();
-  if (res.data && res.data.data) applyState(res.data.data);
-
-  // Subscribe to live changes
-  supabase.channel('tournament_sync')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_state' }, function(payload) {
-      if (payload.new && payload.new.data) applyState(payload.new.data);
-    })
-    .subscribe();
-
-  // Wire up send function
-  _sendState = async function() {
-    var state = { teams: teams, schedule: schedule, scores: scores, combinedSlots: combinedSlots, champPairs: champPairs, champScores: champScores };
-    await supabase.from('tournament_state').upsert({ id: 1, data: state });
-  };
-
-  // If admin already generated while waiting for init, send now
-  if (isAdmin && teams.length > 0) _sendState();
-
-  document.getElementById('connection-status').textContent = 'Live';
-  document.getElementById('connection-status').style.background = '#3a6b0e';
-})();
+// Start polling (viewers) and initial fetch
+fetchState();
+setInterval(fetchState, POLL_INTERVAL);
+document.getElementById('connection-status').textContent = 'Live';
+document.getElementById('connection-status').style.background = '#3a6b0e';
 
 // Start up
 if (!isAdmin) {
