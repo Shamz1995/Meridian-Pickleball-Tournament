@@ -635,7 +635,7 @@
   .hist-dot { display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid; }
   .serve-picker { margin:10px 0;padding:10px;background:var(--bg);border-radius:var(--radius-md);border:2px solid var(--info-text);text-align:center; }
   .serve-picker-label { font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px; }
-  .match-timeline { margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--radius-md);font-size:11px;max-height:200px;overflow-y:auto; }
+  .match-timeline { display:none;margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--radius-md);font-size:11px;max-height:200px;overflow-y:auto; }
   .match-timeline .tl-item { display:flex;align-items:center;gap:4px;padding:2px 0; }
   .match-timeline .tl-time { color:var(--text3);min-width:32px; }
   .match-timeline .tl-dot { width:6px;height:6px;border-radius:50%;display:inline-block; }
@@ -1202,13 +1202,13 @@ function beginMatch(teamIdx) {
   var court = p.court, cat = p.cat, mid = p.mid;
   var st = courtGameState[court];
   st.server = teamIdx;
-  st.serveNum = 1;
+  st.serveNum = 2;
   courtTimers[court].startTime = Date.now();
   var id = getMatchId(cat, mid);
   if (!matchDetails[id]) matchDetails[id] = { serverFirst: teamIdx, duration: null, timerStart: null, timeline: [] };
   matchDetails[id].serverFirst = teamIdx;
   matchDetails[id].timerStart = courtTimers[court].startTime;
-  matchDetails[id].timeline.push({ type: 'serve', team: teamIdx, serveNum: 1, time: Date.now() });
+  matchDetails[id].timeline.push({ type: 'serve', team: teamIdx, serveNum: 2, time: Date.now() });
   sendStateToSupabase();
   renderLive();
   tickTimers();
@@ -1301,10 +1301,12 @@ function matchTimelineHtml(cat, mid, match) {
   if (!md || !md.timeline || md.timeline.length === 0) return '';
   var durStr = md.duration !== null ? ' · ' + formatDuration(md.duration) : '';
   var t1 = match.t1, t2 = match.t2;
+  var t1score = 0, t2score = 0;
   var items = md.timeline.map(function(ev, i) {
     var label, color;
     if (ev.type === 'point') {
-      label = esc(teams[ev.team].name) + ' scores (' + (ev.serveNum === 1 ? '1st' : '2nd') + ' serve)';
+      if (ev.team === t1) t1score++; else t2score++;
+      label = esc(teams[ev.team].name) + ' scores (' + t1score + '-' + t2score + ')';
       color = teams[ev.team].color;
     } else if (ev.type === 'sideout') {
       label = 'Sideout — ' + esc(teams[ev.team].name) + ' serving';
