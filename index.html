@@ -1551,6 +1551,14 @@ setChampScore = function(cat, side, value) {
   sendStateToSupabase();
 };
 
+// Sync tab highlights when user clicks a label (radio change)
+document.querySelectorAll('.tab-radio').forEach(function(r) {
+  r.addEventListener('change', function() {
+    var tab = this.id.replace('r-', '');
+    switchTab(tab);
+  });
+});
+
 // Start polling (viewers) and initial fetch
 fetchState();
 setInterval(fetchState, POLL_INTERVAL);
