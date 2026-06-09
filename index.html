@@ -643,6 +643,9 @@
       <button class="btn btn-sm" onclick="showPage('page-setup')" id="btn-edit-teams" ontouchend="showPage('page-setup')">
         <i class="ti ti-arrow-left"></i> Edit teams
       </button>
+      <button class="btn btn-sm" onclick="resetTournament()" id="btn-reset" ontouchend="resetTournament()" style="color:var(--danger-text)">
+        <i class="ti ti-refresh"></i> Reset
+      </button>
       <button class="btn btn-sm" onclick="printPDF()" ontouchend="printPDF()">
         <i class="ti ti-file-export"></i> Save PDF
       </button>
@@ -1343,6 +1346,15 @@ function showPage(id) {
   document.getElementById(id).classList.add('active');
 }
 
+function resetTournament() {
+  if (!isAdmin || !confirm('Reset tournament? All scores and schedule will be lost.')) return;
+  teams = []; schedule = { mens: [], mixed: [] }; scores = { mens: {}, mixed: {} };
+  combinedSlots = []; champPairs = { mens: {}, mixed: {} }; champScores = { mens: null, mixed: null };
+  document.getElementById('page-tournament').classList.remove('active');
+  document.getElementById('page-setup').classList.add('active');
+  sendStateToSupabase();
+}
+
 function printPDF() {
   const w = window.open('', '_blank');
   const title = 'Pickleball Tournament Report';
@@ -1568,6 +1580,7 @@ document.getElementById('connection-status').style.background = '#3a6b0e';
 // Start up
 if (!isAdmin) {
   document.getElementById('btn-edit-teams').style.display = 'none';
+  document.getElementById('btn-reset').style.display = 'none';
 }
 buildSetupUI();
 </script>
