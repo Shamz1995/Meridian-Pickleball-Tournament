@@ -1005,6 +1005,17 @@ function setScore(cat, mid, side, value) {
   if (!scores[cat][mid]) scores[cat][mid] = { s1: null, s2: null };
   const v = value === '' ? null : parseInt(value);
   scores[cat][mid][side] = (v !== null && !isNaN(v) && v >= 0) ? v : null;
+  if (v !== null && !isNaN(v) && v >= 0 && v < 11) {
+    const other = side === 's1' ? 's2' : 's1';
+    if (scores[cat][mid][other] === null) scores[cat][mid][other] = 11;
+  }
+  renderAll();
+}
+
+function setScoreLive(cat, mid, side, value) {
+  if (!scores[cat][mid]) scores[cat][mid] = { s1: null, s2: null };
+  const v = value === '' ? null : parseInt(value);
+  scores[cat][mid][side] = (v !== null && !isNaN(v) && v >= 0) ? v : null;
   renderAll();
 }
 
@@ -1090,12 +1101,12 @@ function renderLive() {
 
     var scoreHtml = '';
     if (isAdmin) {
-      scoreHtml = '<select onchange="setScore(\'' + cat + '\',\'' + match.id + '\',\'s1\',this.value)" class="live-score" style="' + (t1won ? 'color:' + teams[match.t1].color : '') + '">'
+      scoreHtml = '<select onchange="setScoreLive(\'' + cat + '\',\'' + match.id + '\',\'s1\',this.value)" class="live-score" style="' + (t1won ? 'color:' + teams[match.t1].color : '') + '">'
         + '<option value="">—</option>'
         + [0,1,2,3,4,5,6,7,8,9,10,11].map(function(n) { return '<option value="' + n + '"' + (sv1 === n ? ' selected' : '') + '>' + n + '</option>'; }).join('')
         + '</select>'
         + '<span class="live-divider">-</span>'
-        + '<select onchange="setScore(\'' + cat + '\',\'' + match.id + '\',\'s2\',this.value)" class="live-score" style="' + (t2won ? 'color:' + teams[match.t2].color : '') + '">'
+        + '<select onchange="setScoreLive(\'' + cat + '\',\'' + match.id + '\',\'s2\',this.value)" class="live-score" style="' + (t2won ? 'color:' + teams[match.t2].color : '') + '">'
         + '<option value="">—</option>'
         + [0,1,2,3,4,5,6,7,8,9,10,11].map(function(n) { return '<option value="' + n + '"' + (sv2 === n ? ' selected' : '') + '>' + n + '</option>'; }).join('')
         + '</select>';
@@ -1632,6 +1643,12 @@ generateTournament = function() {
 var _origSetScore = setScore;
 setScore = function(cat, mid, side, value) {
   _origSetScore(cat, mid, side, value);
+  sendStateToSupabase();
+};
+
+var _origSetScoreLive = setScoreLive;
+setScoreLive = function(cat, mid, side, value) {
+  _origSetScoreLive(cat, mid, side, value);
   sendStateToSupabase();
 };
 
