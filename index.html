@@ -1021,7 +1021,10 @@ function setScoreLive(cat, mid, side, value) {
 
 function isMatchDone(cat, mid) {
   const e = scores[cat][mid];
-  return e && e.s1 !== null && e.s2 !== null && e.s1 !== e.s2;
+  if (!e || e.s1 === null || e.s2 === null) return false;
+  const max = Math.max(e.s1, e.s2);
+  const diff = Math.abs(e.s1 - e.s2);
+  return max >= 11 && diff >= 2;
 }
 
 function matchCell(match, cat) {
