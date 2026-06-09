@@ -703,6 +703,7 @@ let combinedSlots = [];
 
 let champPairs = { mens: {}, mixed: {} };
 let champScores = { mens: null, mixed: null };
+let courtTimers = { courtA: { startTime: null }, courtB: { startTime: null } };
 
 const ADMIN_KEY = 'pickleball2024'; // change this to your secret
 const isAdmin = location.hash === '#' + ADMIN_KEY;
@@ -1019,6 +1020,38 @@ function setScoreLive(cat, mid, side, value) {
   renderAll();
 }
 
+// --- Timer helpers ---
+function formatTimer(startTime) {
+  if (!startTime) return '--:--';
+  var sec = Math.floor((Date.now() - startTime) / 1000);
+  if (sec < 0) return '00:00';
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function startCourtTimer(court) {
+  if (!courtTimers[court]) courtTimers[court] = { startTime: null };
+  courtTimers[court].startTime = Date.now();
+  sendStateToSupabase();
+  renderLive();
+}
+
+function resetCourtTimer(court) {
+  if (courtTimers[court]) courtTimers[court].startTime = null;
+  sendStateToSupabase();
+  renderLive();
+}
+
+// 1-second interval to keep timer displays current
+function tickTimers() {
+  document.querySelectorAll('.court-timer').forEach(function(el) {
+    var ct = courtTimers[el.dataset.court];
+    if (ct && ct.startTime) el.textContent = formatTimer(ct.startTime);
+  });
+}
+setInterval(tickTimers, 1000);
+
 function isMatchDone(cat, mid) {
   const e = scores[cat][mid];
   if (!e || e.s1 === null || e.s2 === null) return false;
@@ -1117,11 +1150,25 @@ function renderLive() {
         + '<span class="live-score" style="' + (t2won ? 'color:' + teams[match.t2].color : '') + '">' + (sv2 !== '' ? sv2 : '&ndash;') + '</span>';
     }
 
-    return '<div class="live-court"><h3>' + label + '</h3><div class="live-scorebox">'
+    var courtKey = cat === 'mens' ? 'courtA' : 'courtB';
+    var ct = courtTimers[courtKey] || { startTime: null };
+    var timerHtml = '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px">'
+      + '<span class="court-timer" data-court="' + courtKey + '" style="font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;min-width:70px;text-align:center">' + formatTimer(ct.startTime) + '</span>';
+    if (isAdmin) {
+      timerHtml += ct.startTime
+        ? '<button class="btn btn-sm" onclick="resetCourtTimer(\'' + courtKey + '\')" style="font-size:11px;padding:3px 10px"><i class="ti ti-player-stop"></i> Reset</button>'
+        : '<button class="btn btn-sm" onclick="startCourtTimer(\'' + courtKey + '\')" style="font-size:11px;padding:3px 10px"><i class="ti ti-player-play"></i> Start</button>';
+    }
+    timerHtml += '</div>';
+
+    return '<div class="live-court"><h3>' + label + '</h3>'
+      + '<div class="live-scorebox">'
       + '<div class="live-team' + (t1won ? ' winner' : '') + '"><div class="name" style="color:' + teams[match.t1].color + '">' + esc(teams[match.t1].name) + '</div><div class="players">' + esc(t1players) + '</div></div>'
       + scoreHtml
       + '<div class="live-team' + (t2won ? ' winner' : '') + '"><div class="name" style="color:' + teams[match.t2].color + '">' + esc(teams[match.t2].name) + '</div><div class="players">' + esc(t2players) + '</div></div>'
-      + '</div></div>';
+      + '</div>'
+      + timerHtml
+      + '</div>';
   }
 
   html += courtHtml(slot.courtA, 'mens', 'Court A — Men\'s doubles');
@@ -1445,7 +1492,7 @@ function showPage(id) {
 function resetTournament() {
   if (!isAdmin || !confirm('Reset tournament? All scores and schedule will be lost.')) return;
   teams = []; schedule = { mens: [], mixed: [] }; scores = { mens: {}, mixed: {} };
-  combinedSlots = []; champPairs = { mens: {}, mixed: {} }; champScores = { mens: null, mixed: null };
+  combinedSlots = []; champPairs = { mens: {}, mixed: {} }; champScores = { mens: null, mixed: null }; courtTimers = { courtA: { startTime: null }, courtB: { startTime: null } };
   document.getElementById('page-tournament').classList.remove('active');
   document.getElementById('page-setup').classList.add('active');
   sendStateToSupabase();
@@ -1602,6 +1649,7 @@ function applyState(d) {
   combinedSlots = d.combinedSlots || [];
   champPairs = d.champPairs || { mens: {}, mixed: {} };
   champScores = d.champScores || { mens: null, mixed: null };
+  courtTimers = d.courtTimers || { courtA: { startTime: null }, courtB: { startTime: null } };
   if (teams.length > 0) {
     var wasSetup = document.getElementById('page-setup').classList.contains('active');
     document.getElementById('page-setup').classList.remove('active');
@@ -1625,7 +1673,7 @@ async function fetchState() {
 
 async function sendStateToSupabase() {
   try {
-    var state = { teams: teams, schedule: schedule, scores: scores, combinedSlots: combinedSlots, champPairs: champPairs, champScores: champScores };
+    var state = { teams: teams, schedule: schedule, scores: scores, combinedSlots: combinedSlots, champPairs: champPairs, champScores: champScores, courtTimers: courtTimers };
     await fetch(SUPABASE_URL + '/rest/v1/tournament_state?id=eq.1', {
       method: 'PATCH',
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
