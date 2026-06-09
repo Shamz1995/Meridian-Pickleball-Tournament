@@ -290,20 +290,24 @@
   }
 
   .match-teams {
-    font-size: 14px;
-    color: var(--text);
-    margin-bottom: 5px;
-    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 6px;
   }
+  .match-team { display:flex;align-items:center;gap:6px; }
+  .team-players-vert { display:flex;flex-direction:column;line-height:1.3; }
+  .tp-name { font-size:14px;font-weight:600;white-space:nowrap; }
 
-  .match-vs { color: var(--text3); margin: 0 5px; font-weight: 400; }
+  .match-vs { color: var(--text3); font-weight: 400; font-size:12px; }
 
   .score-row {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     margin-top: 6px;
-    flex-wrap: wrap;
   }
 
   .score-row select {
@@ -326,16 +330,9 @@
 
   .score-vs { color: var(--text3); margin: 0 4px; font-weight: 500; font-size: 15px; }
 
-  .winner-badge {
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 99px;
-    background: var(--success-bg);
-    color: var(--success-text);
-    font-weight: 600;
-    margin-left: 6px;
-    letter-spacing: 0.01em;
-  }
+  .winner-row { text-align:center;margin-top:8px; }
+  .winner-badge { font-size:11px;padding:4px 14px;border-radius:99px;background:var(--success-bg);color:var(--success-text);font-weight:600;letter-spacing:0.01em;display:inline-block; }
+  .score-val { font-size:20px;font-weight:700;min-width:28px;text-align:center;display:inline-block; }
 
   .court-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -1325,20 +1322,16 @@ function matchCell(match, cat) {
   const done = isMatchDone(cat, match.id);
   const sv1 = e.s1 !== null ? e.s1 : '';
   const sv2 = e.s2 !== null ? e.s2 : '';
-  const statusIcon = done ? '<i class="ti ti-check" style="color:var(--success-text);font-size:13px;margin-right:5px;vertical-align:-1px"></i>' : '<i class="ti ti-clock" style="color:var(--text3);font-size:13px;margin-right:5px;vertical-align:-1px"></i>';
-  let winnerHtml = '';
+  const statusIcon = done ? '<i class="ti ti-check" style="color:var(--success-text);font-size:13px;vertical-align:-1px"></i>' : '<i class="ti ti-clock" style="color:var(--text3);font-size:13px;vertical-align:-1px"></i>';
   let t1won = false, t2won = false;
-  if (done) {
-    t1won = e.s1 > e.s2;
-    t2won = e.s2 > e.s1;
-    const wIdx = t1won ? match.t1 : match.t2;
-    winnerHtml = '<span class="winner-badge">' + esc(teams[wIdx].name) + ' wins</span>';
-  }
+  if (done) { t1won = e.s1 > e.s2; t2won = e.s2 > e.s1; }
+  var p1 = getPlayers(cat, match.t1, match.p1);
+  var p2 = getPlayers(cat, match.t2, match.p2);
   return '<td class="match-cell ' + (done ? 'done' : 'pending') + '">'
-    + '<div class="match-teams" style="font-size:14px">' + statusIcon
-      + '<span style="display:inline-flex;align-items:center;gap:4px"><span class="team-dot" style="background:' + teams[match.t1].color + ';width:8px;height:8px"></span><span style="color:' + teams[match.t1].color + '">' + playerStr(cat, match.t1, match.p1) + '</span></span>'
-      + '<span class="match-vs"> vs </span>'
-      + '<span style="display:inline-flex;align-items:center;gap:4px"><span class="team-dot" style="background:' + teams[match.t2].color + ';width:8px;height:8px"></span><span style="color:' + teams[match.t2].color + '">' + playerStr(cat, match.t2, match.p2) + '</span></span>'
+    + '<div class="match-teams">' + statusIcon
+      + '<div class="match-team"><span class="team-dot" style="background:' + teams[match.t1].color + '"></span><div class="team-players-vert"><span class="tp-name" style="color:' + teams[match.t1].color + '">' + esc(p1[0]) + '</span><span class="tp-name" style="color:' + teams[match.t1].color + '">' + esc(p1[1]) + '</span></div></div>'
+      + '<span class="match-vs">vs</span>'
+      + '<div class="match-team"><span class="team-dot" style="background:' + teams[match.t2].color + '"></span><div class="team-players-vert"><span class="tp-name" style="color:' + teams[match.t2].color + '">' + esc(p2[0]) + '</span><span class="tp-name" style="color:' + teams[match.t2].color + '">' + esc(p2[1]) + '</span></div></div>'
     + '</div>'
     + '<div class="score-row">'
       + (isAdmin
@@ -1346,16 +1339,16 @@ function matchCell(match, cat) {
           + '<option value="">—</option>'
           + [0,1,2,3,4,5,6,7,8,9,10,11].map(n => '<option value="' + n + '"' + (sv1 === n ? ' selected' : '') + '>' + n + '</option>').join('')
         + '</select>'
-        : '<span style="font-size:20px;font-weight:600;min-width:28px;text-align:center;display:inline-block;' + (t1won ? 'color:' + teams[match.t1].color : '') + '">' + (sv1 !== '' ? sv1 : '&ndash;') + '</span>')
+        : '<span class="score-val' + (t1won ? ' won' : '') + '" style="color:' + (t1won ? teams[match.t1].color : 'inherit') + '">' + (sv1 !== '' ? sv1 : '&ndash;') + '</span>')
       + '<span class="score-vs">-</span>'
       + (isAdmin
         ? '<select onchange="setScore(\'' + cat + '\',\'' + match.id + '\',\'s2\',this.value)" data-cat="' + cat + '" data-mid="' + match.id + '" data-side="s2" style="' + (t2won ? 'border-color:' + teams[match.t2].color + ';background:var(--success-bg)' : '') + '">'
           + '<option value="">—</option>'
           + [0,1,2,3,4,5,6,7,8,9,10,11].map(n => '<option value="' + n + '"' + (sv2 === n ? ' selected' : '') + '>' + n + '</option>').join('')
         + '</select>'
-        : '<span style="font-size:20px;font-weight:600;min-width:28px;text-align:center;display:inline-block;' + (t2won ? 'color:' + teams[match.t2].color : '') + '">' + (sv2 !== '' ? sv2 : '&ndash;') + '</span>')
-      + winnerHtml
+        : '<span class="score-val' + (t2won ? ' won' : '') + '" style="color:' + (t2won ? teams[match.t2].color : 'inherit') + '">' + (sv2 !== '' ? sv2 : '&ndash;') + '</span>')
     + '</div>'
+    + (done ? '<div class="winner-row"><span class="winner-badge">' + esc(p1[0]) + ' & ' + esc(p1[1]) + ' win</span></div>' : '')
     + (done ? matchTimelineHtml(cat, match.id, match) : '')
   + '</td>';
 }
