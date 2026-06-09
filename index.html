@@ -706,7 +706,41 @@ function shuffle(arr) {
   return a;
 }
 
+function saveSetup() {
+  try {
+    var ids = [];
+    for (var ti = 0; ti < 3; ti++) {
+      ids.push('team-name-' + ti);
+      for (var pi = 0; pi < 3; pi++) {
+        ids.push('m-' + ti + '-' + pi + '-0', 'm-' + ti + '-' + pi + '-1');
+      }
+      for (var pi = 0; pi < 2; pi++) {
+        ids.push('x-' + ti + '-' + pi + '-0', 'x-' + ti + '-' + pi + '-1');
+      }
+    }
+    var data = {};
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) data[id] = el.value;
+    });
+    localStorage.setItem('pickleball_setup', JSON.stringify(data));
+  } catch(e) {}
+}
+
+function loadSavedSetup() {
+  try {
+    var raw = localStorage.getItem('pickleball_setup');
+    if (!raw) return;
+    var data = JSON.parse(raw);
+    for (var id in data) {
+      var el = document.getElementById(id);
+      if (el) el.value = data[id];
+    }
+  } catch(e) {}
+}
+
 function clearSavedSetup() {
+  try { localStorage.removeItem('pickleball_setup'); } catch(e) {}
   buildSetupUI();
 }
 
@@ -725,7 +759,7 @@ function buildSetupUI() {
     card.innerHTML = `
       <div class="team-header">
         <div class="team-dot" style="background:${TEAM_COLORS[ti]}"></div>
-        <input type="text" class="team-name-input" id="team-name-${ti}" value="${tname}" placeholder="Team name" >
+        <input type="text" class="team-name-input" id="team-name-${ti}" value="${tname}" placeholder="Team name" oninput="saveSetup()">
         <span style="font-size:12px;color:var(--text3)">Team ${ti+1}</span>
       </div>
       <div class="pairs-grid">
@@ -734,8 +768,8 @@ function buildSetupUI() {
           ${[0,1,2].map(pi=>`
           <div class="pair-row">
             <span class="pair-label">Pair ${pi+1}</span>
-            <input type="text" id="m-${ti}-${pi}-0" placeholder="Player 1" >
-            <input type="text" id="m-${ti}-${pi}-1" placeholder="Player 2" >
+            <input type="text" id="m-${ti}-${pi}-0" placeholder="Player 1" oninput="saveSetup()">
+            <input type="text" id="m-${ti}-${pi}-1" placeholder="Player 2" oninput="saveSetup()">
           </div>`).join('')}
         </div>
         <div>
@@ -743,13 +777,14 @@ function buildSetupUI() {
           ${[0,1].map(pi=>`
           <div class="pair-row">
             <span class="pair-label">Pair ${pi+1}</span>
-            <input type="text" id="x-${ti}-${pi}-0" placeholder="Player 1" >
-            <input type="text" id="x-${ti}-${pi}-1" placeholder="Player 2" >
+            <input type="text" id="x-${ti}-${pi}-0" placeholder="Player 1" oninput="saveSetup()">
+            <input type="text" id="x-${ti}-${pi}-1" placeholder="Player 2" oninput="saveSetup()">
           </div>`).join('')}
         </div>
       </div>`;
     c.appendChild(card);
   });
+  loadSavedSetup();
 }
 
 function getVal(id) {
