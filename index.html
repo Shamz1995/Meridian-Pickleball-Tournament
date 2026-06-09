@@ -1035,12 +1035,14 @@ function startCourtTimer(court) {
   courtTimers[court].startTime = Date.now();
   sendStateToSupabase();
   renderLive();
+  tickTimers();
 }
 
 function resetCourtTimer(court) {
   if (courtTimers[court]) courtTimers[court].startTime = null;
   sendStateToSupabase();
   renderLive();
+  tickTimers();
 }
 
 // 1-second interval to keep timer displays current
@@ -1050,7 +1052,7 @@ function tickTimers() {
     if (ct && ct.startTime) el.textContent = formatTimer(ct.startTime);
   });
 }
-setInterval(tickTimers, 1000);
+setInterval(tickTimers, 200);
 
 function isMatchDone(cat, mid) {
   const e = scores[cat][mid];
