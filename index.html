@@ -1434,8 +1434,8 @@ function renderLive() {
         + '<span class="serve-badge" style="background:' + servingColor + '22;border-color:' + servingColor + ';color:' + servingColor + '"><i class="ti ti-ball-tennis"></i> ' + (servingPlayer2 ? esc(servingPlayer2[0]) + ' \u00b7 ' + esc(servingPlayer2[1]) : '—') + ' — ' + (gs.serveNum === 1 ? '1st Serve' : '2nd Serve') + '</span>';
       if (isAdmin) {
         serveHtml += '<div style="display:flex;gap:6px;margin-top:6px;justify-content:center">'
-          + (gs.serveNum === 2
-            ? '<button class="btn btn-sm" onclick="toggleServeNum(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-arrow-right"></i> 2nd Serve</button>'
+          + (gs.serveNum === 1
+            ? '<button class="btn btn-sm" onclick="toggleServeNum(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-arrow-right"></i> 1st Serve</button>'
             : '<button class="btn btn-sm btn-sideout" onclick="doSideout(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-switch-horizontal"></i> Sideout</button>')
           + '</div>';
       }
