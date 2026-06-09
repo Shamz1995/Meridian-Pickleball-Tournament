@@ -1495,10 +1495,11 @@ function applyState(d) {
   champPairs = d.champPairs || { mens: {}, mixed: {} };
   champScores = d.champScores || { mens: null, mixed: null };
   if (teams.length > 0) {
+    var wasSetup = document.getElementById('page-setup').classList.contains('active');
     document.getElementById('page-setup').classList.remove('active');
     document.getElementById('page-tournament').classList.add('active');
     renderAll();
-    switchTab('schedule');
+    if (wasSetup) switchTab('schedule');
   }
 }
 
