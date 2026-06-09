@@ -626,6 +626,8 @@
   .live-team.winner .name::after { content: ' ✓'; font-size: 14px; }
   .live-empty { text-align: center; padding: 40px 0; color: var(--text3); }
   .live-empty i { font-size: 32px; display: block; margin-bottom: 10px; }
+  .score-arrow { background:none;border:none;cursor:pointer;padding:2px 8px;font-size:16px;color:var(--text2);border-radius:4px;line-height:1;touch-action:manipulation }
+  .score-arrow:hover { background:var(--bg3); }
 </style>
 </head>
 <body>
@@ -1020,6 +1022,18 @@ function setScoreLive(cat, mid, side, value) {
   renderAll();
 }
 
+function changeScore(cat, mid, side, delta) {
+  if (!scores[cat][mid]) scores[cat][mid] = { s1: null, s2: null };
+  var cur = scores[cat][mid][side];
+  if (cur === null) cur = 0;
+  var nxt = cur + delta;
+  if (nxt < 0) nxt = 0;
+  if (nxt > 30) nxt = 30;
+  scores[cat][mid][side] = nxt;
+  renderAll();
+  sendStateToSupabase();
+}
+
 // --- Timer helpers ---
 function formatTimer(startTime) {
   if (!startTime) return '--:--';
@@ -1137,15 +1151,21 @@ function renderLive() {
 
     var scoreHtml = '';
     if (isAdmin) {
-      scoreHtml = '<select onchange="setScoreLive(\'' + cat + '\',\'' + match.id + '\',\'s1\',this.value)" class="live-score" style="' + (t1won ? 'color:' + teams[match.t1].color : '') + '">'
-        + '<option value="">—</option>'
-        + [0,1,2,3,4,5,6,7,8,9,10,11].map(function(n) { return '<option value="' + n + '"' + (sv1 === n ? ' selected' : '') + '>' + n + '</option>'; }).join('')
-        + '</select>'
+      var s1disp = sv1 !== '' ? sv1 : '0';
+      var s2disp = sv2 !== '' ? sv2 : '0';
+      scoreHtml = '<div style="display:flex;align-items:center;gap:6px">'
+        + '<div style="display:flex;flex-direction:column;gap:2px">'
+        + '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s1\',1)" style="' + (t1won ? 'color:' + teams[match.t1].color : '') + '"><i class="ti ti-chevron-up"></i></button>'
+        + '<span class="live-score" style="' + (t1won ? 'color:' + teams[match.t1].color : '') + '">' + s1disp + '</span>'
+        + '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s1\',-1)" style="' + (t1won ? 'color:' + teams[match.t1].color : '') + '"><i class="ti ti-chevron-down"></i></button>'
+        + '</div>'
         + '<span class="live-divider">-</span>'
-        + '<select onchange="setScoreLive(\'' + cat + '\',\'' + match.id + '\',\'s2\',this.value)" class="live-score" style="' + (t2won ? 'color:' + teams[match.t2].color : '') + '">'
-        + '<option value="">—</option>'
-        + [0,1,2,3,4,5,6,7,8,9,10,11].map(function(n) { return '<option value="' + n + '"' + (sv2 === n ? ' selected' : '') + '>' + n + '</option>'; }).join('')
-        + '</select>';
+        + '<div style="display:flex;flex-direction:column;gap:2px">'
+        + '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s2\',1)" style="' + (t2won ? 'color:' + teams[match.t2].color : '') + '"><i class="ti ti-chevron-up"></i></button>'
+        + '<span class="live-score" style="' + (t2won ? 'color:' + teams[match.t2].color : '') + '">' + s2disp + '</span>'
+        + '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s2\',-1)" style="' + (t2won ? 'color:' + teams[match.t2].color : '') + '"><i class="ti ti-chevron-down"></i></button>'
+        + '</div>'
+        + '</div>';
     } else {
       scoreHtml = '<span class="live-score" style="' + (t1won ? 'color:' + teams[match.t1].color : '') + '">' + (sv1 !== '' ? sv1 : '&ndash;') + '</span>'
         + '<span class="live-divider">-</span>'
