@@ -1068,7 +1068,7 @@ function changeScore(cat, mid, side, delta) {
   var gs = court ? courtGameState[court] : null;
   var teamIdx = side === 's1' ? match.t1 : match.t2;
   // Block scoring for non-serving team if server is set and match isn't done
-  if (delta > 0 && gs && gs.server !== null && gs.server !== teamIdx) return;
+  if (delta > 0 && gs && gs.server !== null && gs.server !== (teamIdx === match.t1 ? 0 : 1)) return;
   var cur = scores[cat][mid][side];
   if (cur === null) cur = 0;
   var nxt = cur + delta;
@@ -1121,7 +1121,8 @@ function toggleServe(cat, mid) {
   if (st.server === null) st.server = 0;
   st.server = st.server === 0 ? 1 : 0;
   st.serveNum = 1;
-  recordServeChange(cat, mid, court, st.server, 1);
+  var matchRec = getMatchForCat(cat, mid);
+  recordServeChange(cat, mid, court, st.server === 0 ? matchRec.t1 : matchRec.t2, 1);
   renderAll();
   sendStateToSupabase();
 }
@@ -1134,7 +1135,8 @@ function toggleServeNum(cat, mid) {
   if (st.serverPlayer === undefined || st.serverPlayer === null) st.serverPlayer = 0;
   st.serveNum = st.serveNum === 1 ? 2 : 1;
   st.serverPlayer = st.serverPlayer === 0 ? 1 : 0;
-  recordServeChange(cat, mid, court, st.server, st.serveNum, st.serverPlayer);
+  var matchRec = getMatchForCat(cat, mid);
+  recordServeChange(cat, mid, court, st.server === 0 ? matchRec.t1 : matchRec.t2, st.serveNum, st.serverPlayer);
   renderAll();
   sendStateToSupabase();
 }
@@ -1149,12 +1151,12 @@ function doSideout(cat, mid) {
   if (!courtHistory[court]) courtHistory[court] = [];
   courtHistory[court].push({ type: 'sideout', time: Date.now() });
   if (courtHistory[court].length > 50) courtHistory[court].splice(0, courtHistory[court].length - 50);
+  var match = getMatchForCat(cat, mid);
   var id = getMatchId(cat, mid);
   if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
-  matchDetails[id].timeline.push({ type: 'sideout', team: st.server, player: 0, serveNum: 1, time: Date.now() });
+  matchDetails[id].timeline.push({ type: 'sideout', team: st.server === 0 ? match.t1 : match.t2, player: 0, serveNum: 1, time: Date.now() });
   if (matchDetails[id].timeline.length > 200) matchDetails[id].timeline.splice(0, matchDetails[id].timeline.length - 200);
   playBeep();
-  var match = getMatchForCat(cat, mid);
   var teamIdx = st.server === 0 ? match.t1 : match.t2;
   if (matchDetails[id].firstServerOfTeam && matchDetails[id].firstServerOfTeam[teamIdx] !== undefined) {
     var e = scores[cat][mid] || { s1: 0, s2: 0 };
@@ -1236,8 +1238,9 @@ function beginMatch(teamIdx, playerIdx) {
   var p = pendingServePick;
   pendingServePick = null;
   var court = p.court, cat = p.cat, mid = p.mid;
+  var match = getMatchForCat(cat, mid);
   var st = courtGameState[court];
-  st.server = teamIdx;
+  st.server = teamIdx === match.t1 ? 0 : 1;
   st.serverPlayer = playerIdx;
   st.serveNum = 2;
   courtTimers[court].startTime = Date.now();
@@ -1433,8 +1436,8 @@ function renderLive() {
     if (isAdmin) {
       var s1disp = sv1 !== '' ? sv1 : '0';
       var s2disp = sv2 !== '' ? sv2 : '0';
-      var s1canScore = !done && gs.server !== null && gs.server === match.t1;
-      var s2canScore = !done && gs.server !== null && gs.server === match.t2;
+      var s1canScore = !done && gs.server !== null && gs.server === 0;
+      var s2canScore = !done && gs.server !== null && gs.server === 1;
       scoreHtml = '<div style="display:flex;align-items:center;gap:8px">'
         + '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">'
         + (s1canScore ? '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s1\',1)" style="background:' + c1 + '22;border-color:' + c1 + '"><i class="ti ti-chevron-up"></i></button>' : '<div style="width:28px;height:28px"></div>')
@@ -1462,7 +1465,7 @@ function renderLive() {
       var servingTeam = gs.server !== null && (gs.server === 0 ? match.t1 : match.t2);
       var servingColor = servingTeam !== false && servingTeam !== null ? teams[servingTeam].color : 'var(--text3)';
       var servingPlayer = (servingTeam !== false && servingTeam !== null && gs.serverPlayer !== undefined && gs.serverPlayer !== null)
-        ? esc(getMatchPlayers(cat, match, gs.server)[gs.serverPlayer]) : '';
+        ? esc(getMatchPlayers(cat, match, servingTeam)[gs.serverPlayer]) : '';
       serveHtml = '<div class="serve-indicator">'
         + '<span class="serve-badge" style="background:' + servingColor + '22;border-color:' + servingColor + ';color:' + servingColor + '"><i class="ti ti-ball-tennis"></i> ' + (servingPlayer || '\u2014') + ' — ' + (gs.serveNum === 1 ? '1st Serve' : '2nd Serve') + '</span>';
       if (isAdmin) {
