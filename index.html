@@ -255,10 +255,12 @@
   /* CSS-only tab switching via hidden radio inputs */
   .tab-radio { position:absolute;opacity:0;pointer-events:none; }
   .tab-content { display: none; }
+  #r-live:checked ~ #tab-live { display: block; }
   #r-schedule:checked ~ #tab-schedule { display: block; }
   #r-championship:checked ~ #tab-championship { display: block; }
   #r-standings:checked ~ #tab-standings { display: block; }
   #r-summary:checked ~ #tab-summary { display: block; }
+  #r-live:checked ~ .nav-tabs label[for="r-live"],
   #r-schedule:checked ~ .nav-tabs label[for="r-schedule"],
   #r-championship:checked ~ .nav-tabs label[for="r-championship"],
   #r-standings:checked ~ .nav-tabs label[for="r-standings"],
@@ -607,6 +609,23 @@
   }
   .champ-winner-box::before { left: 10%; animation-delay: 0.1s; }
   .champ-winner-box::after { right: 10%; animation-delay: 0.3s; content: '🏆'; }
+
+  /* Live scoreboard */
+  .live-board { text-align: center; padding: 10px 0; }
+  .live-board .round-label { font-size: 13px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .live-board .round-label span { font-weight: 600; color: var(--text); }
+  .live-court { margin-bottom: 24px; }
+  .live-court h3 { font-size: 14px; color: var(--text2); margin-bottom: 8px; font-weight: 500; }
+  .live-scorebox { display: flex; align-items: center; justify-content: center; gap: 12px; background: var(--bg); border-radius: var(--radius-lg); padding: 14px 18px; border: 1px solid var(--border); }
+  .live-team { flex: 1; text-align: center; min-width: 0; }
+  .live-team .name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+  .live-team .players { font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .live-score { font-size: 36px; font-weight: 700; line-height: 1.1; min-width: 48px; text-align: center; }
+  .live-divider { font-size: 20px; color: var(--text3); }
+  .live-team.winner .name { color: var(--success-text); }
+  .live-team.winner .name::after { content: ' ✓'; font-size: 14px; }
+  .live-empty { text-align: center; padding: 40px 0; color: var(--text3); }
+  .live-empty i { font-size: 32px; display: block; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -651,16 +670,19 @@
       </button>
 
     </div>
+    <input type="radio" name="tg" id="r-live" class="tab-radio">
     <input type="radio" name="tg" id="r-schedule" class="tab-radio" checked>
     <input type="radio" name="tg" id="r-championship" class="tab-radio">
     <input type="radio" name="tg" id="r-standings" class="tab-radio">
     <input type="radio" name="tg" id="r-summary" class="tab-radio">
     <div class="nav-tabs">
+      <label class="nav-tab" data-tab="live" for="r-live"><i class="ti ti-player-play" style="font-size:14px;margin-right:4px"></i>Live</label>
       <label class="nav-tab active" data-tab="schedule" for="r-schedule"><i class="ti ti-calendar" style="font-size:14px;margin-right:4px"></i>Preliminary Round</label>
       <label class="nav-tab" data-tab="championship" for="r-championship"><i class="ti ti-trophy" style="font-size:14px;margin-right:4px"></i>Championship</label>
       <label class="nav-tab" data-tab="standings" for="r-standings"><i class="ti ti-chart-bar" style="font-size:14px;margin-right:4px"></i>Standings</label>
       <label class="nav-tab" data-tab="summary" for="r-summary"><i class="ti ti-report" style="font-size:14px;margin-right:4px"></i>Summary</label>
     </div>
+    <div id="tab-live" class="tab-content"></div>
     <div id="tab-schedule" class="tab-content"></div>
     <div id="tab-standings" class="tab-content"></div>
     <div id="tab-championship" class="tab-content"></div>
@@ -1035,6 +1057,71 @@ function matchCell(match, cat) {
   + '</td>';
 }
 
+function renderLive() {
+  let html = '<div class="live-board">';
+
+  var curIdx = -1;
+  for (var i = 0; i < combinedSlots.length; i++) {
+    var slot = combinedSlots[i];
+    var aDone = !slot.courtA || isMatchDone('mens', slot.courtA.id);
+    var bDone = !slot.courtB || isMatchDone('mixed', slot.courtB.id);
+    if (!aDone || !bDone) { curIdx = i; break; }
+  }
+
+  if (curIdx === -1 || combinedSlots.length === 0) {
+    var allDone = combinedSlots.length > 0;
+    html += allDone
+      ? '<div class="live-empty"><i class="ti ti-circle-check"></i>All matches complete! Check the Championship tab.</div>'
+      : '<div class="live-empty"><i class="ti ti-player-play"></i>Generate a tournament to see live scoring.</div>';
+    html += '</div>';
+    document.getElementById('tab-live').innerHTML = html;
+    return;
+  }
+
+  var slot = combinedSlots[curIdx];
+  html += '<div class="round-label">Current Round <span>R' + (curIdx + 1) + '</span></div>';
+
+  function courtHtml(match, cat, label, color) {
+    if (!match) return '';
+    var e = scores[cat][match.id] || { s1: null, s2: null };
+    var done = isMatchDone(cat, match.id);
+    var sv1 = e.s1 !== null ? e.s1 : '';
+    var sv2 = e.s2 !== null ? e.s2 : '';
+    var t1won = done && e.s1 > e.s2;
+    var t2won = done && e.s2 > e.s1;
+    var t1players = playerStr(cat, match.t1, match.p1);
+    var t2players = playerStr(cat, match.t2, match.p2);
+
+    var scoreHtml = '';
+    if (isAdmin) {
+      scoreHtml = '<select onchange="setScore(\'' + cat + '\',\'' + match.id + '\',\'s1\',this.value)" class="live-score" style="' + (t1won ? 'color:' + teams[match.t1].color : '') + '">'
+        + '<option value="">—</option>'
+        + [0,1,2,3,4,5,6,7,8,9,10,11].map(function(n) { return '<option value="' + n + '"' + (sv1 === n ? ' selected' : '') + '>' + n + '</option>'; }).join('')
+        + '</select>'
+        + '<span class="live-divider">-</span>'
+        + '<select onchange="setScore(\'' + cat + '\',\'' + match.id + '\',\'s2\',this.value)" class="live-score" style="' + (t2won ? 'color:' + teams[match.t2].color : '') + '">'
+        + '<option value="">—</option>'
+        + [0,1,2,3,4,5,6,7,8,9,10,11].map(function(n) { return '<option value="' + n + '"' + (sv2 === n ? ' selected' : '') + '>' + n + '</option>'; }).join('')
+        + '</select>';
+    } else {
+      scoreHtml = '<span class="live-score" style="' + (t1won ? 'color:' + teams[match.t1].color : '') + '">' + (sv1 !== '' ? sv1 : '&ndash;') + '</span>'
+        + '<span class="live-divider">-</span>'
+        + '<span class="live-score" style="' + (t2won ? 'color:' + teams[match.t2].color : '') + '">' + (sv2 !== '' ? sv2 : '&ndash;') + '</span>';
+    }
+
+    return '<div class="live-court"><h3>' + label + '</h3><div class="live-scorebox">'
+      + '<div class="live-team' + (t1won ? ' winner' : '') + '"><div class="name" style="color:' + teams[match.t1].color + '">' + esc(teams[match.t1].name) + '</div><div class="players">' + esc(t1players) + '</div></div>'
+      + scoreHtml
+      + '<div class="live-team' + (t2won ? ' winner' : '') + '"><div class="name" style="color:' + teams[match.t2].color + '">' + esc(teams[match.t2].name) + '</div><div class="players">' + esc(t2players) + '</div></div>'
+      + '</div></div>';
+  }
+
+  html += courtHtml(slot.courtA, 'mens', 'Court A — Men\'s doubles');
+  html += courtHtml(slot.courtB, 'mixed', 'Court B — Mixed doubles');
+  html += '</div>';
+  document.getElementById('tab-live').innerHTML = html;
+}
+
 function renderSchedule() {
   const mensTotal = schedule.mens.length;
   const mixedTotal = schedule.mixed.length;
@@ -1326,6 +1413,7 @@ function renderSummary() {
 function labelCat(cat) { return cat === 'mens' ? "Men's" : "Mixed"; }
 
 function renderAll() {
+  renderLive();
   renderSchedule();
   renderStandings();
   renderChampionship();
