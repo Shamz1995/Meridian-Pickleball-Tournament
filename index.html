@@ -620,6 +620,7 @@
   .live-team { flex: 1; text-align: center; min-width: 0; }
   .live-team .name { font-size: 22px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0; }
   .live-team .players { font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .live-team .players-vert { font-size: 18px; font-weight: 700; line-height: 1.3; }
   .live-score { font-size: 42px; font-weight: 700; line-height: 1; min-width: 52px; text-align: center; }
   .live-divider { font-size: 28px; color: var(--text3); font-weight: 300; }
   .live-team.winner .name { color: var(--success-text); }
@@ -1496,9 +1497,9 @@ function renderLive() {
       + '<h3>' + label + '</h3>'
       + pickHtml
       + '<div class="live-scorebox">'
-      + '<div class="live-team' + (t1won ? ' winner' : '') + '"><div class="name" style="color:' + c1 + '">' + esc(teams[match.t1].name) + '</div></div>'
+      + '<div class="live-team' + (t1won ? ' winner' : '') + '"><div class="players-vert" style="color:' + c1 + '">' + esc(t1players.split(' & ').join('<br>')) + '</div></div>'
       + scoreHtml
-      + '<div class="live-team' + (t2won ? ' winner' : '') + '"><div class="name" style="color:' + c2 + '">' + esc(teams[match.t2].name) + '</div></div>'
+      + '<div class="live-team' + (t2won ? ' winner' : '') + '"><div class="players-vert" style="color:' + c2 + '">' + esc(t2players.split(' & ').join('<br>')) + '</div></div>'
       + '</div>'
       + serveHtml
       + timerHtml
