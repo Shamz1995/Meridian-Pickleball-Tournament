@@ -641,6 +641,30 @@
   .live-empty i { font-size: 32px; display: block; margin-bottom: 10px; }
   .score-arrow { background:none;border:none;cursor:pointer;padding:4px 14px;font-size:22px;color:var(--text2);border-radius:6px;line-height:1;touch-action:manipulation }
   .score-arrow:hover { background:var(--bg3); }
+
+  @media (max-width:640px) {
+    .live-scorebox { gap:12px;padding:20px 14px; }
+    .live-team { min-width:0; }
+    .live-team .players-vert { font-size:18px; }
+    .live-score { font-size:32px;min-width:36px; }
+    .live-divider { font-size:24px; }
+    .live-court h3 { font-size:16px; }
+    .score-arrow { padding:3px 10px;font-size:18px; }
+    .serve-badge { font-size:12px;padding:4px 12px; }
+    .match-teams { gap:4px; }
+    .tp-name { font-size:12px; }
+    .schedule-tbl { font-size:12px; }
+  }
+  @media (max-width:400px) {
+    .live-scorebox { gap:8px;padding:14px 8px; }
+    .live-team .players-vert { font-size:14px; }
+    .live-score { font-size:24px;min-width:28px; }
+    .live-divider { font-size:18px; }
+    .live-court h3 { font-size:14px;margin-bottom:4px; }
+    .score-arrow { padding:2px 8px;font-size:15px; }
+    .serve-badge { font-size:10px;padding:3px 8px; }
+    .live-scorebox { flex-wrap:wrap; }
+  }
 </style>
 </head>
 <body>
