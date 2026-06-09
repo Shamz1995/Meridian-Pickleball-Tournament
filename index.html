@@ -968,6 +968,11 @@ function playerVertHtml(cat, ti, pi, color) {
   return '<div class="players-vert" style="color:' + color + '">' + esc(p[0]) + '<br>' + esc(p[1]) + '</div>';
 }
 
+function getPlayerDisplay(cat, ti, pi) {
+  var p = getPlayers(cat, ti, pi);
+  return esc(p[0]) + ' \u00b7 ' + esc(p[1]);
+}
+
 function computeStats(cat) {
   const s = {};
   for (let i = 0; i < 3; i++) s[i] = { wins:0, losses:0, pf:0, pa:0 };
@@ -1422,15 +1427,16 @@ function renderLive() {
     if (!done) {
       var servingTeam = gs.server !== null && (gs.server === 0 ? match.t1 : match.t2);
       var servingColor = servingTeam !== false && servingTeam !== null ? teams[servingTeam].color : 'var(--text3)';
-      var servingName = servingTeam !== false && servingTeam !== null ? esc(teams[servingTeam].name) : '—';
       var servingPlayer = (servingTeam !== false && servingTeam !== null && gs.serverPlayer !== undefined && gs.serverPlayer !== null)
         ? esc(getMatchPlayers(cat, match, gs.server)[gs.serverPlayer]) : '';
+      var servingPlayer2 = servingTeam !== false && servingTeam !== null ? getMatchPlayers(cat, match, gs.server) : null;
       serveHtml = '<div class="serve-indicator">'
-        + '<span class="serve-badge" style="background:' + servingColor + '22;border-color:' + servingColor + ';color:' + servingColor + '"><i class="ti ti-ball-tennis"></i> ' + servingName + (servingPlayer ? ' (' + servingPlayer + ')' : '') + ' — ' + (gs.serveNum === 1 ? '1st Serve' : '2nd Serve') + '</span>';
+        + '<span class="serve-badge" style="background:' + servingColor + '22;border-color:' + servingColor + ';color:' + servingColor + '"><i class="ti ti-ball-tennis"></i> ' + (servingPlayer2 ? esc(servingPlayer2[0]) + ' \u00b7 ' + esc(servingPlayer2[1]) : '—') + ' — ' + (gs.serveNum === 1 ? '1st Serve' : '2nd Serve') + '</span>';
       if (isAdmin) {
         serveHtml += '<div style="display:flex;gap:6px;margin-top:6px;justify-content:center">'
-          + '<button class="btn btn-sm" onclick="toggleServeNum(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-arrows-shuffle"></i> ' + (gs.serveNum === 1 ? '2nd' : '1st') + '</button>'
-          + '<button class="btn btn-sm btn-sideout" onclick="doSideout(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-switch-horizontal"></i> Sideout</button>'
+          + (gs.serveNum === 2
+            ? '<button class="btn btn-sm" onclick="toggleServeNum(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-arrow-right"></i> 2nd Serve</button>'
+            : '<button class="btn btn-sm btn-sideout" onclick="doSideout(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-switch-horizontal"></i> Sideout</button>')
           + '</div>';
       }
       serveHtml += '</div>';
@@ -1476,15 +1482,15 @@ function renderLive() {
       if (pendingServePick.phase === 'team') {
         pickHtml = '<div class="serve-picker"><div class="serve-picker-label">Who serves first?</div>'
           + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
-          + '<button class="btn" onclick="pickServerTeam(' + match.t1 + ')" style="background:' + c1 + '22;color:' + c1 + ';border:2px solid ' + c1 + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(teams[match.t1].name) + '</button>'
-          + '<button class="btn" onclick="pickServerTeam(' + match.t2 + ')" style="background:' + c2 + '22;color:' + c2 + ';border:2px solid ' + c2 + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(teams[match.t2].name) + '</button>'
+          + '<button class="btn" onclick="pickServerTeam(' + match.t1 + ')" style="background:' + c1 + '22;color:' + c1 + ';border:2px solid ' + c1 + ';padding:8px 24px;font-size:16px;font-weight:600">' + getPlayerDisplay(cat, match.t1, match.p1) + '</button>'
+          + '<button class="btn" onclick="pickServerTeam(' + match.t2 + ')" style="background:' + c2 + '22;color:' + c2 + ';border:2px solid ' + c2 + ';padding:8px 24px;font-size:16px;font-weight:600">' + getPlayerDisplay(cat, match.t2, match.p2) + '</button>'
           + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
           + '</div></div>';
       } else {
         var teamIdx = pendingServePick.teamIdx;
         var teamColor = teamIdx === match.t1 ? c1 : c2;
         var players = getMatchPlayers(cat, match, teamIdx);
-        pickHtml = '<div class="serve-picker"><div class="serve-picker-label">Choose server — ' + esc(teams[teamIdx].name) + '</div>'
+        pickHtml = '<div class="serve-picker"><div class="serve-picker-label">Choose server — ' + getPlayerDisplay(cat, teamIdx, teamIdx === match.t1 ? match.p1 : match.p2) + '</div>'
           + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
           + '<button class="btn" onclick="beginMatch(' + teamIdx + ',0)" style="background:' + teamColor + '22;color:' + teamColor + ';border:2px solid ' + teamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(players[0]) + '</button>'
           + '<button class="btn" onclick="beginMatch(' + teamIdx + ',1)" style="background:' + teamColor + '22;color:' + teamColor + ';border:2px solid ' + teamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(players[1]) + '</button>'
