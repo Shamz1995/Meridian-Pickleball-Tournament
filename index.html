@@ -1238,6 +1238,8 @@ function recordServeChange(cat, mid, court, server, serveNum, playerIdx) {
 
 function startCourtTimer(court, cat, mid) {
   if (!courtTimers[court]) courtTimers[court] = { startTime: null };
+  courtHistory[court] = [];
+  courtGameState[court] = { server: null, serverPlayer: null, serveNum: 1 };
   pendingServePick = { phase: 'team', court: court, cat: cat, mid: mid };
   renderLive();
 }
