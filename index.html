@@ -1518,7 +1518,7 @@ async function sendStateToSupabase() {
   try {
     var state = { teams: teams, schedule: schedule, scores: scores, combinedSlots: combinedSlots, champPairs: champPairs, champScores: champScores };
     await fetch(SUPABASE_URL + '/rest/v1/tournament_state?id=eq.1', {
-      method: 'PUT',
+      method: 'PATCH',
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify({ data: state })
     });
