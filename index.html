@@ -1022,9 +1022,7 @@ function setScoreLive(cat, mid, side, value) {
 function isMatchDone(cat, mid) {
   const e = scores[cat][mid];
   if (!e || e.s1 === null || e.s2 === null) return false;
-  const max = Math.max(e.s1, e.s2);
-  const diff = Math.abs(e.s1 - e.s2);
-  return max >= 11 && diff >= 2;
+  return e.s1 >= 11 || e.s2 >= 11;
 }
 
 function matchCell(match, cat) {
@@ -1675,9 +1673,9 @@ document.querySelectorAll('.tab-radio').forEach(function(r) {
   });
 });
 
-// Start polling (viewers) and initial fetch
+// Start: fetch existing state, poll only for viewers
 fetchState();
-setInterval(fetchState, POLL_INTERVAL);
+if (!isAdmin) setInterval(fetchState, POLL_INTERVAL);
 document.getElementById('connection-status').textContent = 'Live';
 document.getElementById('connection-status').style.background = '#3a6b0e';
 
