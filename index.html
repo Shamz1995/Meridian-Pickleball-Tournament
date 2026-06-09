@@ -1358,25 +1358,25 @@ function renderLive() {
     var c1 = teams[match.t1].color;
     var c2 = teams[match.t2].color;
     var courtKey = cat === 'mens' ? 'courtA' : 'courtB';
+    var gs = courtGameState[courtKey] || { server: null, serveNum: 1 };
 
     var scoreHtml = '';
     if (isAdmin) {
       var s1disp = sv1 !== '' ? sv1 : '0';
       var s2disp = sv2 !== '' ? sv2 : '0';
-      var gs = courtGameState[courtKey] || { server: null, serveNum: 1 };
       var s1canScore = !done && gs.server !== null && gs.server === match.t1;
       var s2canScore = !done && gs.server !== null && gs.server === match.t2;
       scoreHtml = '<div style="display:flex;align-items:center;gap:8px">'
         + '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">'
         + (s1canScore ? '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s1\',1)" style="background:' + c1 + '22;border-color:' + c1 + '"><i class="ti ti-chevron-up"></i></button>' : '<div style="width:28px;height:28px"></div>')
         + '<span class="live-score" style="color:' + (t1won ? c1 : 'inherit') + '">' + s1disp + '</span>'
-        + '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s1\',-1)" style="background:' + c1 + '22;border-color:' + c1 + '"><i class="ti ti-chevron-down"></i></button>'
+        + (s1canScore ? '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s1\',-1)" style="background:' + c1 + '22;border-color:' + c1 + '"><i class="ti ti-chevron-down"></i></button>' : '<div style="width:28px;height:28px"></div>')
         + '</div>'
         + '<span class="live-divider">-</span>'
         + '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">'
         + (s2canScore ? '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s2\',1)" style="background:' + c2 + '22;border-color:' + c2 + '"><i class="ti ti-chevron-up"></i></button>' : '<div style="width:28px;height:28px"></div>')
         + '<span class="live-score" style="color:' + (t2won ? c2 : 'inherit') + '">' + s2disp + '</span>'
-        + '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s2\',-1)" style="background:' + c2 + '22;border-color:' + c2 + '"><i class="ti ti-chevron-down"></i></button>'
+        + (s2canScore ? '<button class="score-arrow" onclick="changeScore(\'' + cat + '\',\'' + match.id + '\',\'s2\',-1)" style="background:' + c2 + '22;border-color:' + c2 + '"><i class="ti ti-chevron-down"></i></button>' : '<div style="width:28px;height:28px"></div>')
         + '</div>'
         + '</div>';
     } else {
@@ -1388,7 +1388,6 @@ function renderLive() {
     var ct = courtTimers[courtKey] || { startTime: null };
 
     // Serve indicator
-    var gs = courtGameState[courtKey] || { server: null, serveNum: 1 };
     var serveHtml = '';
     if (!done) {
       var servingTeam = gs.server !== null && (gs.server === 0 ? match.t1 : match.t2);
@@ -1398,7 +1397,6 @@ function renderLive() {
         + '<span class="serve-badge" style="background:' + servingColor + '22;border-color:' + servingColor + ';color:' + servingColor + '"><i class="ti ti-ball-tennis"></i> ' + servingName + ' — ' + (gs.serveNum === 1 ? '1st Serve' : '2nd Serve') + '</span>';
       if (isAdmin) {
         serveHtml += '<div style="display:flex;gap:4px;margin-top:4px;justify-content:center">'
-          + '<button class="btn btn-sm" onclick="toggleServe(\'' + cat + '\',\'' + match.id + '\')" style="font-size:10px;padding:2px 8px"><i class="ti ti-switch"></i> Switch Server</button>'
           + '<button class="btn btn-sm" onclick="toggleServeNum(\'' + cat + '\',\'' + match.id + '\')" style="font-size:10px;padding:2px 8px"><i class="ti ti-arrows-shuffle"></i> ' + (gs.serveNum === 1 ? '2nd' : '1st') + '</button>'
           + '<button class="btn btn-sm btn-sideout" onclick="doSideout(\'' + cat + '\',\'' + match.id + '\')" style="font-size:10px;padding:2px 8px"><i class="ti ti-switch-horizontal"></i> Sideout</button>'
           + '</div>';
