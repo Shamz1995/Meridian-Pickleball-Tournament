@@ -1339,8 +1339,10 @@ setInterval(tickTimers, 200);
 
 function isMatchDone(cat, mid) {
   const e = scores[cat][mid];
-  if (!e || e.s1 === null || e.s2 === null) return false;
-  return e.s1 >= 11 || e.s2 >= 11;
+  if (!e) return false;
+  var a = e.s1 === null ? 0 : e.s1;
+  var b = e.s2 === null ? 0 : e.s2;
+  return a >= 11 || b >= 11;
 }
 
 function matchCell(match, cat) {
