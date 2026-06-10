@@ -1451,6 +1451,21 @@ function matchTimelineHtml(cat, mid, match) {
 }
 
 function renderLive() {
+  var totalAll = combinedSlots.length;
+  var totalDone = 0;
+  for (var si = 0; si < totalAll; si++) {
+    var sl = combinedSlots[si];
+    var aD = !sl.courtA || isMatchDone('mens', sl.courtA.id);
+    var bD = !sl.courtB || isMatchDone('mixed', sl.courtB.id);
+    if (aD && bD) totalDone++;
+  }
+  var allPrelimDone = totalAll > 0 && totalDone === totalAll;
+  if (allPrelimDone) {
+    renderLiveChampionship();
+    tickTimers();
+    return;
+  }
+
   let html = '<div class="live-board">';
 
   var curIdx = -1;
