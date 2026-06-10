@@ -1002,17 +1002,19 @@ function computeStats(cat) {
   for (let i = 0; i < 3; i++) s[i] = { wins:0, losses:0, pf:0, pa:0 };
   for (const mid of Object.keys(scores[cat])) {
     const entry = scores[cat][mid];
-    if (entry.s1 === null || entry.s2 === null) continue;
+    const a = entry.s1 === null ? 0 : entry.s1;
+    const b = entry.s2 === null ? 0 : entry.s2;
+    if (a === 0 && b === 0) continue;
     const match = schedule[cat].find(m => m.id === mid);
     if (!match) continue;
-    s[match.t1].pf += entry.s1;
-    s[match.t1].pa += entry.s2;
-    s[match.t2].pf += entry.s2;
-    s[match.t2].pa += entry.s1;
-    if (entry.s1 > entry.s2) {
+    s[match.t1].pf += a;
+    s[match.t1].pa += b;
+    s[match.t2].pf += b;
+    s[match.t2].pa += a;
+    if (a > b) {
       s[match.t1].wins++;
       s[match.t2].losses++;
-    } else if (entry.s2 > entry.s1) {
+    } else if (b > a) {
       s[match.t2].wins++;
       s[match.t1].losses++;
     }
@@ -1034,16 +1036,18 @@ function h2hWins(cat, teamA, teamB) {
   let aw = 0, bw = 0;
   for (const mid of Object.keys(scores[cat])) {
     const entry = scores[cat][mid];
-    if (entry.s1 === null || entry.s2 === null) continue;
+    const a = entry.s1 === null ? 0 : entry.s1;
+    const b = entry.s2 === null ? 0 : entry.s2;
+    if (a === 0 && b === 0) continue;
     const match = schedule[cat].find(m => m.id === mid);
     if (!match) continue;
     if ((match.t1 === teamA && match.t2 === teamB) || (match.t1 === teamB && match.t2 === teamA)) {
       if (match.t1 === teamA) {
-        if (entry.s1 > entry.s2) aw++;
-        else if (entry.s2 > entry.s1) bw++;
+        if (a > b) aw++;
+        else if (b > a) bw++;
       } else {
-        if (entry.s2 > entry.s1) aw++;
-        else if (entry.s1 > entry.s2) bw++;
+        if (b > a) aw++;
+        else if (a > b) bw++;
       }
     }
   }
@@ -1069,10 +1073,6 @@ function setScore(cat, mid, side, value) {
   if (!scores[cat][mid]) scores[cat][mid] = { s1: null, s2: null };
   const v = value === '' ? null : parseInt(value);
   scores[cat][mid][side] = (v !== null && !isNaN(v) && v >= 0) ? v : null;
-  if (v !== null && !isNaN(v) && v >= 0 && v < 11) {
-    const other = side === 's1' ? 's2' : 's1';
-    if (scores[cat][mid][other] === null) scores[cat][mid][other] = 11;
-  }
   renderAll();
 }
 
