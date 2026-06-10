@@ -527,7 +527,8 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow);
-    border: 1px solid var(--border2);
+    outline: 2px solid var(--border2);
+    outline-offset: -1px;
   }
 
   .schedule-tbl th,
@@ -1683,6 +1684,24 @@ function renderSchedule() {
   }
   html += '</div>';
   document.getElementById('tab-schedule').innerHTML = html;
+  fitNames();
+}
+
+function fitNames() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.tp-name').forEach(el => {
+      el.style.fontSize = '';
+      const cell = el.closest('td') || el.closest('th');
+      if (!cell) return;
+      const maxW = cell.clientWidth - 24;
+      let fs = parseInt(getComputedStyle(el).fontSize) || 15;
+      el.style.fontSize = fs + 'px';
+      while (el.offsetWidth > maxW && fs > 8) {
+        fs--;
+        el.style.fontSize = fs + 'px';
+      }
+    });
+  });
 }
 
 let showDetails = false;
