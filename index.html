@@ -1589,9 +1589,9 @@ function renderLive() {
         + '<span class="court-timer" data-court="' + courtKey + '" style="font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;min-width:80px;text-align:center">' + formatTimer(ct.startTime) + '</span>';
       if (isAdmin) {
         if (ct.startTime) {
-          timerHtml += '<button class="btn btn-sm" onclick="resetCourtTimer(\'' + courtKey + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-stop"></i> Reset</button>';
+          timerHtml += '<button class="btn btn-sm btn-start" onclick="resetCourtTimer(\'' + courtKey + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-stop"></i> Reset</button>';
         } else {
-          timerHtml += '<button class="btn btn-sm" onclick="startCourtTimer(\'' + courtKey + '\',\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-play"></i> Start</button>';
+          timerHtml += '<button class="btn btn-sm btn-start" onclick="startCourtTimer(\'' + courtKey + '\',\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-play"></i> Start</button>';
         }
       }
       timerHtml += '</div>';
@@ -1605,7 +1605,7 @@ function renderLive() {
           + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
           + '<button class="btn" onclick="pickServerTeam(' + match.t1 + ')" style="background:' + c1 + '22;color:' + c1 + ';border:2px solid ' + c1 + ';padding:8px 24px;font-size:16px;font-weight:600">' + getPlayerDisplay(cat, match.t1, match.p1) + '</button>'
           + '<button class="btn" onclick="pickServerTeam(' + match.t2 + ')" style="background:' + c2 + '22;color:' + c2 + ';border:2px solid ' + c2 + ';padding:8px 24px;font-size:16px;font-weight:600">' + getPlayerDisplay(cat, match.t2, match.p2) + '</button>'
-          + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
+          + '<button class="btn btn-sm btn-start" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
           + '</div></div>';
       } else if (pendingServePick.phase === 'player') {
         var teamIdx = pendingServePick.teamIdx;
@@ -1615,7 +1615,7 @@ function renderLive() {
           + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
           + '<button class="btn" onclick="beginMatch(' + teamIdx + ',0)" style="background:' + teamColor + '22;color:' + teamColor + ';border:2px solid ' + teamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(players[0]) + '</button>'
           + '<button class="btn" onclick="beginMatch(' + teamIdx + ',1)" style="background:' + teamColor + '22;color:' + teamColor + ';border:2px solid ' + teamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(players[1]) + '</button>'
-          + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
+          + '<button class="btn btn-sm btn-start" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
           + '</div></div>';
       } else if (pendingServePick.phase === 'player2') {
         var team2Idx = pendingServePick.team2TeamIdx;
@@ -1625,7 +1625,7 @@ function renderLive() {
           + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
           + '<button class="btn" onclick="beginMatch(' + team2Idx + ',0)" style="background:' + team2Color + '22;color:' + team2Color + ';border:2px solid ' + team2Color + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(team2players[0]) + '</button>'
           + '<button class="btn" onclick="beginMatch(' + team2Idx + ',1)" style="background:' + team2Color + '22;color:' + team2Color + ';border:2px solid ' + team2Color + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(team2players[1]) + '</button>'
-          + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
+          + '<button class="btn btn-sm btn-start" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
           + '</div></div>';
       }
     }
@@ -1822,9 +1822,9 @@ function renderLiveChampionship() {
         + '<span class="court-timer" data-court="' + courtKey + '" style="font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;min-width:80px;text-align:center">' + formatTimer(ct.startTime) + '</span>';
       if (isAdmin) {
         if (ct.startTime) {
-          timerHtml += '<button class="btn btn-sm" onclick="resetChampTimer(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-stop"></i> Reset</button>';
+          timerHtml += '<button class="btn btn-sm btn-start" onclick="resetChampTimer(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-stop"></i> Reset</button>';
         } else {
-          timerHtml += '<button class="btn btn-sm" onclick="startChampTimer(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-play"></i> Start</button>';
+          timerHtml += '<button class="btn btn-sm btn-start" onclick="startChampTimer(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-play"></i> Start</button>';
         }
       }
       timerHtml += '</div>';
@@ -1837,7 +1837,7 @@ function renderLiveChampionship() {
           + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
           + '<button class="btn" onclick="pickServerTeam(' + t1 + ')" style="background:' + c1 + '22;color:' + c1 + ';border:2px solid ' + c1 + ';padding:8px 24px;font-size:16px;font-weight:600">' + getPlayerDisplay(cat, t1, Math.floor(cp1[0] / 2)) + '</button>'
           + '<button class="btn" onclick="pickServerTeam(' + t2 + ')" style="background:' + c2 + '22;color:' + c2 + ';border:2px solid ' + c2 + ';padding:8px 24px;font-size:16px;font-weight:600">' + getPlayerDisplay(cat, t2, Math.floor(cp2[0] / 2)) + '</button>'
-          + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
+          + '<button class="btn btn-sm btn-start" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
           + '</div></div>';
       } else if (pendingServePick.phase === 'player') {
         var teamIdx = pendingServePick.teamIdx;
@@ -1848,7 +1848,7 @@ function renderLiveChampionship() {
           + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
           + '<button class="btn" onclick="beginChampMatch(' + teamIdx + ',0)" style="background:' + teamColor + '22;color:' + teamColor + ';border:2px solid ' + teamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(players[0]) + '</button>'
           + '<button class="btn" onclick="beginChampMatch(' + teamIdx + ',1)" style="background:' + teamColor + '22;color:' + teamColor + ';border:2px solid ' + teamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(players[1]) + '</button>'
-          + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
+          + '<button class="btn btn-sm btn-start" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
           + '</div></div>';
       } else if (pendingServePick.phase === 'player2') {
         var team2Idx = pendingServePick.team2TeamIdx;
@@ -1859,7 +1859,7 @@ function renderLiveChampionship() {
           + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
           + '<button class="btn" onclick="beginChampMatch(' + team2Idx + ',0)" style="background:' + team2Color + '22;color:' + team2Color + ';border:2px solid ' + team2Color + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(team2players[0]) + '</button>'
           + '<button class="btn" onclick="beginChampMatch(' + team2Idx + ',1)" style="background:' + team2Color + '22;color:' + team2Color + ';border:2px solid ' + team2Color + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(team2players[1]) + '</button>'
-          + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
+          + '<button class="btn btn-sm btn-start" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
           + '</div></div>';
       }
     }
