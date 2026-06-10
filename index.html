@@ -2123,10 +2123,10 @@ function allPlayerNames(cat, ti) {
   return names;
 }
 
-function playerOptions(cat, ti, exclude) {
+function playerOptions(cat, ti, exclude, selected) {
   const names = allPlayerNames(cat, ti);
   return names.map((n, i) =>
-    `<option value="${i}"${i === exclude ? ' disabled' : ''}>${esc(n)}</option>`
+    `<option value="${i}"${i === exclude ? ' disabled' : ''}${i === selected ? ' selected' : ''}>${esc(n)}</option>`
   ).join('');
 }
 
@@ -2190,11 +2190,11 @@ function renderChampionship() {
       }
       return '<div class="player-select-row">'
         + '<select onchange="setChampPlayer(\'' + cat + '\',' + teamIdx + ',0,this.value)">'
-          + playerOptions(cat, teamIdx, pairArr[1])
+          + playerOptions(cat, teamIdx, pairArr[1], pairArr[0])
         + '</select>'
         + '<span style="margin:0 4px">&amp;</span>'
         + '<select onchange="setChampPlayer(\'' + cat + '\',' + teamIdx + ',1,this.value)">'
-          + playerOptions(cat, teamIdx, pairArr[0])
+          + playerOptions(cat, teamIdx, pairArr[0], pairArr[1])
         + '</select>'
       + '</div>';
     }
