@@ -1943,6 +1943,8 @@ function doChampSideout(cat) {
     sendStateToSupabase();
   }
 }
+
+function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
   } else {
