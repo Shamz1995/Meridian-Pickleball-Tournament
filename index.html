@@ -712,14 +712,14 @@
       </button>
 
     </div>
-    <input type="radio" name="tg" id="r-live" class="tab-radio">
-    <input type="radio" name="tg" id="r-schedule" class="tab-radio" checked>
+    <input type="radio" name="tg" id="r-live" class="tab-radio" checked>
+    <input type="radio" name="tg" id="r-schedule" class="tab-radio">
     <input type="radio" name="tg" id="r-championship" class="tab-radio">
     <input type="radio" name="tg" id="r-standings" class="tab-radio">
     <input type="radio" name="tg" id="r-summary" class="tab-radio">
     <div class="nav-tabs">
-      <label class="nav-tab" data-tab="live" for="r-live"><i class="ti ti-player-play" style="font-size:14px;margin-right:4px"></i>Live</label>
-      <label class="nav-tab active" data-tab="schedule" for="r-schedule"><i class="ti ti-calendar" style="font-size:14px;margin-right:4px"></i>Preliminary Round</label>
+      <label class="nav-tab active" data-tab="live" for="r-live"><i class="ti ti-player-play" style="font-size:14px;margin-right:4px"></i>Live</label>
+      <label class="nav-tab" data-tab="schedule" for="r-schedule"><i class="ti ti-calendar" style="font-size:14px;margin-right:4px"></i>Preliminary Round</label>
       <label class="nav-tab" data-tab="championship" for="r-championship"><i class="ti ti-trophy" style="font-size:14px;margin-right:4px"></i>Championship</label>
       <label class="nav-tab" data-tab="standings" for="r-standings"><i class="ti ti-chart-bar" style="font-size:14px;margin-right:4px"></i>Standings</label>
       <label class="nav-tab" data-tab="summary" for="r-summary"><i class="ti ti-report" style="font-size:14px;margin-right:4px"></i>Summary</label>
@@ -903,7 +903,7 @@ function generateTournament() {
   combinedSlots = buildCombinedSlots();
   renderAll();
   showPage('page-tournament');
-  switchTab('schedule');
+  switchTab('live');
 }
 
 function getPlayers(cat, ti, pi) { return teams[ti][cat][pi]; }
@@ -2103,7 +2103,7 @@ function applyState(d) {
     document.getElementById('page-setup').classList.remove('active');
     document.getElementById('page-tournament').classList.add('active');
     renderAll();
-    if (wasSetup) switchTab('schedule');
+    if (wasSetup) switchTab('live');
   }
 }
 
