@@ -1566,7 +1566,7 @@ function renderLive() {
       if (isAdmin) {
         serveHtml += '<div style="display:flex;gap:6px;margin-top:6px;justify-content:center">'
           + (gs.serveNum === 1
-            ? '<button class="btn btn-sm" onclick="toggleServeNum(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-arrow-right"></i> 2nd Serve</button>'
+            ? '<button class="btn btn-sm btn-start" onclick="toggleServeNum(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-arrow-right"></i> 2nd Serve</button>'
             : '<button class="btn btn-sm btn-sideout" onclick="doSideout(\'' + cat + '\',\'' + match.id + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-switch-horizontal"></i> Sideout</button>')
           + '</div>';
       }
@@ -1799,7 +1799,7 @@ function renderLiveChampionship() {
       if (isAdmin) {
         serveHtml += '<div style="display:flex;gap:6px;margin-top:6px;justify-content:center">'
           + (gs.serveNum === 1
-            ? '<button class="btn btn-sm" onclick="toggleChampServeNum(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-arrow-right"></i> 2nd Serve</button>'
+            ? '<button class="btn btn-sm btn-start" onclick="toggleChampServeNum(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-arrow-right"></i> 2nd Serve</button>'
             : '<button class="btn btn-sm btn-sideout" onclick="doChampSideout(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-switch-horizontal"></i> Sideout</button>')
           + '</div>';
       }
