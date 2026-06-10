@@ -646,7 +646,11 @@
   .hist-dot { display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid; }
   .live-court .court-timer { color:#fff; }
   .live-court .btn-start { color:#fff;border-color:rgba(255,255,255,0.3); }
+  .court-mens .btn-start { background:#D13161;border-color:#D13161; }
+  .court-mixed .btn-start { background:#06214A;border-color:#06214A; }
   .live-court .btn-start:hover { background:rgba(255,255,255,0.1); }
+  .court-mens .btn-start:hover { background:#b82a54;border-color:#b82a54; }
+  .court-mixed .btn-start:hover { opacity:0.85; }
   .serve-picker { margin:10px 0;padding:12px 16px;background:rgba(255,255,255,0.08);border-radius:var(--radius-md);border:2px solid #D13161;text-align:center; }
   .serve-picker-label { font-size:14px;font-weight:600;color:#fff;margin-bottom:10px; }
   .match-timeline { display:none;margin-top:10px;padding:10px 14px;background:rgba(255,255,255,0.08);border-radius:var(--radius-md);font-size:12px;max-height:240px;overflow-y:auto; }
@@ -1644,7 +1648,7 @@ function renderLive() {
     var courtBg = cat === 'mens' ? '#06214A' : '#D13161';
     var borderClr = cat === 'mens' ? '#D13161' : '#06214A';
 
-    return '<div class="live-court" style="background:' + courtBg + ';border-top:3px solid ' + borderClr + ';border-bottom:3px solid ' + borderClr + '">'
+    return '<div class="live-court ' + (cat === 'mens' ? 'court-mens' : 'court-mixed') + '" style="background:' + courtBg + ';border-top:3px solid ' + borderClr + ';border-bottom:3px solid ' + borderClr + '">'
       + '<h3>' + label + '</h3>'
       + pickHtml
       + '<div class="live-scorebox">'
@@ -1867,7 +1871,7 @@ function renderLiveChampionship() {
     var courtBg = cat === 'mens' ? '#06214A' : '#D13161';
     var borderClr = cat === 'mens' ? '#D13161' : '#06214A';
 
-    html += '<div class="live-court" style="background:' + courtBg + ';border-top:3px solid ' + borderClr + ';border-bottom:3px solid ' + borderClr + '">'
+    html += '<div class="live-court ' + (cat === 'mens' ? 'court-mens' : 'court-mixed') + '" style="background:' + courtBg + ';border-top:3px solid ' + borderClr + ';border-bottom:3px solid ' + borderClr + '">'
       + '<h3>' + label + '</h3>'
       + pickHtml
       + '<div class="live-scorebox">'
