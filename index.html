@@ -789,6 +789,7 @@ let pendingSideoutPick = null;
 
 const ADMIN_KEY = 'pickleball2024'; // change this to your secret
 const isAdmin = location.hash === '#' + ADMIN_KEY;
+var scoringCourt = null; // null=both, 'mens'=Court A, 'mixed'=Court B
 
 const SUPABASE_URL = 'https://unoqdsjrjpguplctfwsx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVub3Fkc2pyanBndXBsY3Rmd3N4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTM4MzEsImV4cCI6MjA5NjU4OTgzMX0.sVA277ps5por8k0ZQz7pLIZrxt2FsXWCtZHS7vus_rw';
@@ -1513,6 +1514,14 @@ function renderLive() {
   var slot = combinedSlots[curIdx];
   html += '<div class="round-label">Current Round <span>R' + (curIdx + 1) + '</span></div>';
 
+  if (isAdmin) {
+    html += '<div class="court-focus" style="text-align:center;margin-bottom:12px;display:flex;gap:8px;justify-content:center">'
+      + '<button class="btn ' + (!scoringCourt ? 'btn-pink' : 'btn-sm') + '" onclick="setScoringCourt(null)">Both Courts</button>'
+      + '<button class="btn ' + (scoringCourt === 'mens' ? 'btn-pink' : 'btn-sm') + '" onclick="setScoringCourt(\'mens\')">Court A</button>'
+      + '<button class="btn ' + (scoringCourt === 'mixed' ? 'btn-pink' : 'btn-sm') + '" onclick="setScoringCourt(\'mixed\')">Court B</button>'
+      + '</div>';
+  }
+
   function courtHtml(match, cat, label, color) {
     if (!match) return '';
     var e = scores[cat][match.id] || { s1: null, s2: null };
@@ -1669,10 +1678,16 @@ function renderLive() {
   var fullscreenHtml = '<div style="text-align:center;margin-bottom:12px"><button class="btn btn-sm" onclick="toggleFullscreen()" style="font-size:11px;padding:3px 12px"><i class="ti ti-arrows-maximize"></i> Fullscreen</button></div>';
 
   html += fullscreenHtml;
-  html += courtHtml(slot.courtA, 'mens', 'Court A — Men\'s doubles');
-  html += courtHtml(slot.courtB, 'mixed', 'Court B — Mixed doubles');
+  if (!scoringCourt || scoringCourt === 'mens') html += courtHtml(slot.courtA, 'mens', 'Court A — Men\'s doubles');
+  if (!scoringCourt || scoringCourt === 'mixed') html += courtHtml(slot.courtB, 'mixed', 'Court B — Mixed doubles');
   html += '</div>';
   document.getElementById('tab-live').innerHTML = html;
+}
+
+function setScoringCourt(court) {
+  scoringCourt = court;
+  renderLive();
+  tickTimers();
 }
 
 function changeChampScore(cat, side, delta) {
@@ -1722,6 +1737,13 @@ function isChampMatchDone(cat) {
 function renderLiveChampionship() {
   var html = '<div class="live-board">';
   html += '<div class="round-label" style="margin-bottom:12px"><i class="ti ti-trophy"></i> Championship Finals</div>';
+  if (isAdmin) {
+    html += '<div class="court-focus" style="text-align:center;margin-bottom:12px;display:flex;gap:8px;justify-content:center">'
+      + '<button class="btn ' + (!scoringCourt ? 'btn-pink' : 'btn-sm') + '" onclick="setScoringCourt(null)">Both Courts</button>'
+      + '<button class="btn ' + (scoringCourt === 'mens' ? 'btn-pink' : 'btn-sm') + '" onclick="setScoringCourt(\'mens\')">Court A</button>'
+      + '<button class="btn ' + (scoringCourt === 'mixed' ? 'btn-pink' : 'btn-sm') + '" onclick="setScoringCourt(\'mixed\')">Court B</button>'
+      + '</div>';
+  }
   html += '<div style="text-align:center;margin-bottom:12px"><button class="btn btn-sm" onclick="toggleFullscreen()" style="font-size:11px;padding:3px 12px"><i class="ti ti-arrows-maximize"></i> Fullscreen</button></div>';
 
   function chCourtHtml(cat, label) {
@@ -1889,8 +1911,8 @@ function renderLiveChampionship() {
       + '</div>';
   }
 
-  chCourtHtml('mens', "Court A \u2014 Men's Doubles Finals");
-  chCourtHtml('mixed', "Court B \u2014 Mixed Doubles Finals");
+  if (!scoringCourt || scoringCourt === 'mens') chCourtHtml('mens', "Court A \u2014 Men's Doubles Finals");
+  if (!scoringCourt || scoringCourt === 'mixed') chCourtHtml('mixed', "Court B \u2014 Mixed Doubles Finals");
   html += '</div>';
   document.getElementById('tab-live').innerHTML = html;
 }
