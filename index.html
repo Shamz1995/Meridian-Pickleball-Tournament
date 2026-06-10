@@ -1084,7 +1084,7 @@ function setScoreLive(cat, mid, side, value) {
 }
 
 function changeScore(cat, mid, side, delta) {
-  if (!scores[cat][mid]) scores[cat][mid] = { s1: null, s2: null };
+  if (!scores[cat][mid]) scores[cat][mid] = { s1: 0, s2: 0 };
   if (delta > 0 && isMatchDone(cat, mid)) return;
   var match = getMatchForCat(cat, mid);
   if (!match) return;
