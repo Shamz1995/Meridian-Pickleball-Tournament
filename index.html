@@ -1316,8 +1316,15 @@ function pickSideoutPlayer(playerIdx) {
   pendingSideoutPick = null;
   var st = courtGameState[p.court];
   st.serverPlayer = playerIdx;
-  var match = getMatchForCat(p.cat, p.mid);
-  var id = getMatchId(p.cat, p.mid);
+  var match, id;
+  if (p.mid === 'champ') {
+    id = 'champ-' + p.cat;
+    var sorted = sortedTeams(p.cat);
+    match = { t1: sorted[0], t2: sorted[1] };
+  } else {
+    match = getMatchForCat(p.cat, p.mid);
+    id = getMatchId(p.cat, p.mid);
+  }
   if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
   matchDetails[id].firstServerOfTeam[p.teamIdx] = playerIdx;
   matchDetails[id].timeline.push({ type: 'serve', team: p.teamIdx, player: playerIdx, serveNum: 1, time: Date.now() });
@@ -1628,7 +1635,314 @@ function renderLive() {
   document.getElementById('tab-live').innerHTML = html;
 }
 
-function toggleFullscreen() {
+function changeChampScore(cat, side, delta) {
+  if (!champScores[cat]) champScores[cat] = { s1: 0, s2: 0 };
+  if (delta > 0 && isChampMatchDone(cat)) return;
+  var sorted = sortedTeams(cat);
+  var t1 = sorted[0], t2 = sorted[1];
+  var teamIdx = side === 's1' ? t1 : t2;
+  var courtKey = cat === 'mens' ? 'courtA' : 'courtB';
+  var gs = courtGameState[courtKey];
+  if (delta > 0 && gs && gs.server !== null && gs.server !== (teamIdx === t1 ? 0 : 1)) return;
+  var cur = champScores[cat][side] || 0;
+  var nxt = cur + delta;
+  if (nxt < 0) nxt = 0;
+  if (nxt > 30) nxt = 30;
+  if (nxt > cur) {
+    if (!courtHistory[courtKey]) courtHistory[courtKey] = [];
+    courtHistory[courtKey].push({ type: 'point', team: teamIdx, time: Date.now() });
+    if (courtHistory[courtKey].length > 50) courtHistory[courtKey].splice(0, courtHistory[courtKey].length - 50);
+    var id = 'champ-' + cat;
+    if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
+    matchDetails[id].timeline.push({ type: 'point', team: teamIdx, player: gs ? gs.serverPlayer : null, serveNum: gs ? gs.serveNum : 1, time: Date.now() });
+    if (matchDetails[id].timeline.length > 200) matchDetails[id].timeline.splice(0, matchDetails[id].timeline.length - 200);
+    playBeep();
+  }
+  champScores[cat][side] = nxt;
+  if (isChampMatchDone(cat)) {
+    var ct = courtTimers[courtKey];
+    if (ct && ct.startTime) {
+      var dur = Math.floor((Date.now() - ct.startTime) / 1000);
+      ct.startTime = null;
+      var id = 'champ-' + cat;
+      if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
+      matchDetails[id].duration = dur;
+      matchDetails[id].timeline.push({ type: 'match_end', time: Date.now() });
+    }
+  }
+  renderAll();
+  sendStateToSupabase();
+}
+
+function isChampMatchDone(cat) {
+  var cs = champScores[cat] || {};
+  return (cs.s1 !== null && cs.s1 >= 11) || (cs.s2 !== null && cs.s2 >= 11);
+}
+
+function renderLiveChampionship() {
+  var html = '<div class="live-board">';
+  html += '<div class="round-label" style="margin-bottom:12px"><i class="ti ti-trophy"></i> Championship Finals</div>';
+  html += '<div style="text-align:center;margin-bottom:12px"><button class="btn btn-sm" onclick="toggleFullscreen()" style="font-size:11px;padding:3px 12px"><i class="ti ti-arrows-maximize"></i> Fullscreen</button></div>';
+
+  function chCourtHtml(cat, label) {
+    var sorted = sortedTeams(cat);
+    if (sorted.length < 2) return '';
+    var t1 = sorted[0], t2 = sorted[1];
+    var stats = computeStats(cat);
+    if (stats[t1].wins === 0 && stats[t2].wins === 0) return '';
+
+    if (!champPairs[cat]) champPairs[cat] = {};
+    if (!Array.isArray(champPairs[cat][t1])) champPairs[cat][t1] = [0, 1];
+    if (!Array.isArray(champPairs[cat][t2])) champPairs[cat][t2] = [0, 1];
+
+    var cp1 = champPairs[cat][t1];
+    var cp2 = champPairs[cat][t2];
+
+    var cs = champScores[cat] || { s1: null, s2: null };
+    var done = isChampMatchDone(cat);
+    var sv1 = cs.s1 !== null ? cs.s1 : 0;
+    var sv2 = cs.s2 !== null ? cs.s2 : 0;
+    var t1won = done && cs.s1 > cs.s2;
+    var t2won = done && cs.s2 > cs.s1;
+
+    var c1 = teams[t1].color;
+    var c2 = teams[t2].color;
+    var courtKey = cat === 'mens' ? 'courtA' : 'courtB';
+    var gs = courtGameState[courtKey] || { server: null, serveNum: 1 };
+
+    var scoreHtml = '';
+    if (isAdmin) {
+      var s1canScore = !done && gs.server !== null && gs.server === 0;
+      var s2canScore = !done && gs.server !== null && gs.server === 1;
+      scoreHtml = '<div style="display:flex;align-items:center;gap:8px">'
+        + '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">'
+        + (s1canScore ? '<button class="score-arrow" onclick="changeChampScore(\'' + cat + '\',\'s1\',1)" style="background:' + c1 + '22;border-color:' + c1 + '"><i class="ti ti-chevron-up"></i></button>' : '<div style="width:28px;height:28px"></div>')
+        + '<span class="live-score" style="color:' + (t1won ? c1 : 'inherit') + '">' + sv1 + '</span>'
+        + (s1canScore ? '<button class="score-arrow" onclick="changeChampScore(\'' + cat + '\',\'s1\',-1)" style="background:' + c1 + '22;border-color:' + c1 + '"><i class="ti ti-chevron-down"></i></button>' : '<div style="width:28px;height:28px"></div>')
+        + '</div>'
+        + '<span class="live-divider">-</span>'
+        + '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">'
+        + (s2canScore ? '<button class="score-arrow" onclick="changeChampScore(\'' + cat + '\',\'s2\',1)" style="background:' + c2 + '22;border-color:' + c2 + '"><i class="ti ti-chevron-up"></i></button>' : '<div style="width:28px;height:28px"></div>')
+        + '<span class="live-score" style="color:' + (t2won ? c2 : 'inherit') + '">' + sv2 + '</span>'
+        + (s2canScore ? '<button class="score-arrow" onclick="changeChampScore(\'' + cat + '\',\'s2\',-1)" style="background:' + c2 + '22;border-color:' + c2 + '"><i class="ti ti-chevron-down"></i></button>' : '<div style="width:28px;height:28px"></div>')
+        + '</div>'
+        + '</div>';
+    } else {
+      scoreHtml = '<span class="live-score" style="color:' + (t1won ? c1 : 'inherit') + '">' + sv1 + '</span>'
+        + '<span class="live-divider">-</span>'
+        + '<span class="live-score" style="color:' + (t2won ? c2 : 'inherit') + '">' + sv2 + '</span>';
+    }
+
+    var serveHtml = '';
+    if (!done) {
+      var servingTeam = gs.server !== null && (gs.server === 0 ? t1 : t2);
+      var servingColor = servingTeam !== false && servingTeam !== null ? teams[servingTeam].color : 'var(--text3)';
+      var champPlayers = function(teamIdx, pairArr) {
+        var p = getPlayers(cat, teamIdx, Math.floor(pairArr[0] / 2));
+        var p2 = getPlayers(cat, teamIdx, Math.floor(pairArr[1] / 2));
+        return [p[pairArr[0] % 2], p2[pairArr[1] % 2]];
+      };
+      var servingPlayer = (servingTeam !== false && servingTeam !== null && gs.serverPlayer !== undefined && gs.serverPlayer !== null)
+        ? esc(champPlayers(servingTeam, servingTeam === t1 ? cp1 : cp2)[gs.serverPlayer]) : '';
+      serveHtml = '<div class="serve-indicator">'
+        + '<span class="serve-badge" style="background:' + servingColor + '22;border-color:' + servingColor + ';color:' + servingColor + '"><i class="ti ti-ball-tennis"></i> ' + (servingPlayer || '\u2014') + ' \u2014 ' + (gs.serveNum === 1 ? '1st Serve' : '2nd Serve') + '</span>';
+      if (isAdmin) {
+        serveHtml += '<div style="display:flex;gap:6px;margin-top:6px;justify-content:center">'
+          + (gs.serveNum === 1
+            ? '<button class="btn btn-sm" onclick="toggleChampServeNum(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-arrow-right"></i> 2nd Serve</button>'
+            : '<button class="btn btn-sm btn-sideout" onclick="doChampSideout(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-switch-horizontal"></i> Sideout</button>')
+          + '</div>';
+      }
+      serveHtml += '</div>';
+    }
+
+    var hist = courtHistory[courtKey] || [];
+    var showHist = hist.length > 0;
+    var histHtml = '';
+    if (showHist) {
+      var bars = hist.map(function(h) {
+        if (h.type === 'sideout') return '<span class="hist-dot" style="background:var(--text3);border-color:var(--text3)" title="Sideout">&nbsp;</span>';
+        var dotColor = teams[h.team] ? teams[h.team].color : 'var(--text3)';
+        return '<span class="hist-dot" style="background:' + dotColor + ';border-color:' + dotColor + '" title="' + esc(teams[h.team] ? teams[h.team].name : '?') + ' scored">&nbsp;</span>';
+      }).join('');
+      var t1count = hist.filter(function(h) { return h.type === 'point' && h.team === t1; }).length;
+      var t2count = hist.filter(function(h) { return h.type === 'point' && h.team === t2; }).length;
+      histHtml = '<div class="match-history"><div class="hist-label">Points <span class="hist-legend" style="color:' + c1 + '">' + esc(teams[t1].name) + ' ' + t1count + '</span> \u00b7 <span class="hist-legend" style="color:' + c2 + '">' + esc(teams[t2].name) + ' ' + t2count + '</span></div><div class="hist-bars">' + bars + '</div></div>';
+    }
+
+    var timerHtml = '';
+    var md = matchDetails['champ-' + cat];
+    var ct = courtTimers[courtKey] || { startTime: null };
+    if (done && md && md.duration !== null) {
+      timerHtml = '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;color:var(--text2);font-size:13px">'
+        + '<i class="ti ti-clock"></i> Match time: ' + formatDuration(md.duration)
+        + '</div>';
+    } else {
+      timerHtml = '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px">'
+        + '<span class="court-timer" data-court="' + courtKey + '" style="font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;min-width:80px;text-align:center">' + formatTimer(ct.startTime) + '</span>';
+      if (isAdmin) {
+        if (ct.startTime) {
+          timerHtml += '<button class="btn btn-sm" onclick="resetChampTimer(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-stop"></i> Reset</button>';
+        } else {
+          timerHtml += '<button class="btn btn-sm" onclick="startChampTimer(\'' + cat + '\')" style="font-size:12px;padding:4px 14px"><i class="ti ti-player-play"></i> Start</button>';
+        }
+      }
+      timerHtml += '</div>';
+    }
+
+    var pickHtml = '';
+    if (pendingServePick && pendingServePick.court === courtKey && pendingServePick.cat === cat && pendingServePick.mid === 'champ') {
+      if (pendingServePick.phase === 'team') {
+        pickHtml = '<div class="serve-picker"><div class="serve-picker-label">Who serves first?</div>'
+          + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
+          + '<button class="btn" onclick="pickServerTeam(' + t1 + ')" style="background:' + c1 + '22;color:' + c1 + ';border:2px solid ' + c1 + ';padding:8px 24px;font-size:16px;font-weight:600">' + getPlayerDisplay(cat, t1, Math.floor(cp1[0] / 2)) + '</button>'
+          + '<button class="btn" onclick="pickServerTeam(' + t2 + ')" style="background:' + c2 + '22;color:' + c2 + ';border:2px solid ' + c2 + ';padding:8px 24px;font-size:16px;font-weight:600">' + getPlayerDisplay(cat, t2, Math.floor(cp2[0] / 2)) + '</button>'
+          + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
+          + '</div></div>';
+      } else if (pendingServePick.phase === 'player') {
+        var teamIdx = pendingServePick.teamIdx;
+        var teamColor = teamIdx === t1 ? c1 : c2;
+        var pairArr = teamIdx === t1 ? cp1 : cp2;
+        var players = champPlayers(teamIdx, pairArr);
+        pickHtml = '<div class="serve-picker"><div class="serve-picker-label">Choose server \u2014 ' + getPlayerDisplay(cat, teamIdx, Math.floor(pairArr[0] / 2)) + '</div>'
+          + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
+          + '<button class="btn" onclick="beginChampMatch(' + teamIdx + ',0)" style="background:' + teamColor + '22;color:' + teamColor + ';border:2px solid ' + teamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(players[0]) + '</button>'
+          + '<button class="btn" onclick="beginChampMatch(' + teamIdx + ',1)" style="background:' + teamColor + '22;color:' + teamColor + ';border:2px solid ' + teamColor + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(players[1]) + '</button>'
+          + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
+          + '</div></div>';
+      } else if (pendingServePick.phase === 'player2') {
+        var team2Idx = pendingServePick.team2TeamIdx;
+        var team2Color = team2Idx === t1 ? c1 : c2;
+        var team2pair = team2Idx === t1 ? cp1 : cp2;
+        var team2players = champPlayers(team2Idx, team2pair);
+        pickHtml = '<div class="serve-picker"><div class="serve-picker-label">Choose first server for \u2014 ' + getPlayerDisplay(cat, team2Idx, Math.floor(team2pair[0] / 2)) + '</div>'
+          + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
+          + '<button class="btn" onclick="beginChampMatch(' + team2Idx + ',0)" style="background:' + team2Color + '22;color:' + team2Color + ';border:2px solid ' + team2Color + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(team2players[0]) + '</button>'
+          + '<button class="btn" onclick="beginChampMatch(' + team2Idx + ',1)" style="background:' + team2Color + '22;color:' + team2Color + ';border:2px solid ' + team2Color + ';padding:8px 24px;font-size:16px;font-weight:600">' + esc(team2players[1]) + '</button>'
+          + '<button class="btn btn-sm" onclick="cancelServePick()" style="font-size:11px;padding:3px 10px">Cancel</button>'
+          + '</div></div>';
+      }
+    }
+
+    var courtBg = 'linear-gradient(135deg, ' + c1 + '08 0%, var(--bg2) 40%, ' + c2 + '08 100%)';
+
+    html += '<div class="live-court" style="background:' + courtBg + ';border-top:3px solid ' + c1 + '55;border-bottom:3px solid ' + c2 + '55">'
+      + '<h3>' + label + '</h3>'
+      + pickHtml
+      + '<div class="live-scorebox">'
+      + '<div class="live-team' + (t1won ? ' winner' : '') + '">' + playerVertHtml(cat, t1, Math.floor(cp1[0] / 2), c1) + '</div>'
+      + scoreHtml
+      + '<div class="live-team' + (t2won ? ' winner' : '') + '">' + playerVertHtml(cat, t2, Math.floor(cp2[0] / 2), c2) + '</div>'
+      + '</div>'
+      + serveHtml
+      + timerHtml
+      + histHtml
+      + '</div>';
+  }
+
+  chCourtHtml('mens', "Court A \u2014 Men's Doubles Finals");
+  chCourtHtml('mixed', "Court B \u2014 Mixed Doubles Finals");
+  html += '</div>';
+  document.getElementById('tab-live').innerHTML = html;
+}
+
+function startChampTimer(cat) {
+  var courtKey = cat === 'mens' ? 'courtA' : 'courtB';
+  if (!courtTimers[courtKey]) courtTimers[courtKey] = { startTime: null };
+  if (!courtGameState[courtKey]) courtGameState[courtKey] = { server: null, serverPlayer: null, serveNum: 1 };
+  pendingServePick = { phase: 'team', court: courtKey, cat: cat, mid: 'champ' };
+  renderLive();
+}
+
+function beginChampMatch(teamIdx, playerIdx) {
+  if (!pendingServePick) return;
+  var p = pendingServePick;
+  var sorted = sortedTeams(p.cat);
+  var t1 = sorted[0], t2 = sorted[1];
+  if (p.phase === 'player') {
+    p.team1 = { teamIdx: teamIdx, playerIdx: playerIdx };
+    p.team2TeamIdx = teamIdx === t1 ? t2 : t1;
+    p.phase = 'player2';
+    renderLive();
+    return;
+  }
+  pendingServePick = null;
+  var court = p.court, cat = p.cat;
+  courtHistory[court] = [];
+  var st = courtGameState[court];
+  st.server = p.team1.teamIdx === t1 ? 0 : 1;
+  st.serverPlayer = p.team1.playerIdx;
+  st.serveNum = 2;
+  courtTimers[court].startTime = Date.now();
+  var id = 'champ-' + cat;
+  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
+  matchDetails[id].serverFirst = { team: p.team1.teamIdx, player: p.team1.playerIdx };
+  matchDetails[id].firstServerOfTeam[p.team1.teamIdx] = p.team1.playerIdx;
+  matchDetails[id].firstServerOfTeam[p.team2TeamIdx] = playerIdx;
+  matchDetails[id].timerStart = courtTimers[court].startTime;
+  matchDetails[id].timeline.push({ type: 'serve', team: p.team1.teamIdx, player: p.team1.playerIdx, serveNum: 2, time: Date.now() });
+  sendStateToSupabase();
+  renderLive();
+  tickTimers();
+}
+
+function resetChampTimer(cat) {
+  var courtKey = cat === 'mens' ? 'courtA' : 'courtB';
+  if (courtTimers[courtKey]) courtTimers[courtKey].startTime = null;
+  sendStateToSupabase();
+  renderLive();
+  tickTimers();
+}
+
+function toggleChampServeNum(cat) {
+  var courtKey = cat === 'mens' ? 'courtA' : 'courtB';
+  var st = courtGameState[courtKey];
+  if (!st) return;
+  if (st.server === null) st.server = 0;
+  if (st.serverPlayer === undefined || st.serverPlayer === null) st.serverPlayer = 0;
+  st.serveNum = st.serveNum === 1 ? 2 : 1;
+  st.serverPlayer = st.serverPlayer === 0 ? 1 : 0;
+  var sorted = sortedTeams(cat);
+  var t1 = sorted[0], t2 = sorted[1];
+  var servingTeam = st.server === 0 ? t1 : t2;
+  var id = 'champ-' + cat;
+  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
+  matchDetails[id].timeline.push({ type: 'serve', team: servingTeam, player: st.serverPlayer, serveNum: st.serveNum, time: Date.now() });
+  renderAll();
+  sendStateToSupabase();
+}
+
+function doChampSideout(cat) {
+  var courtKey = cat === 'mens' ? 'courtA' : 'courtB';
+  var st = courtGameState[courtKey];
+  if (!st) return;
+  if (st.server === null) st.server = 0;
+  st.server = st.server === 0 ? 1 : 0;
+  st.serveNum = 1;
+  if (!courtHistory[courtKey]) courtHistory[courtKey] = [];
+  courtHistory[courtKey].push({ type: 'sideout', time: Date.now() });
+  if (courtHistory[courtKey].length > 50) courtHistory[courtKey].splice(0, courtHistory[courtKey].length - 50);
+  var sorted = sortedTeams(cat);
+  var t1 = sorted[0], t2 = sorted[1];
+  var id = 'champ-' + cat;
+  if (!matchDetails[id]) matchDetails[id] = { serverFirst: null, duration: null, timerStart: null, timeline: [], firstServerOfTeam: {} };
+  matchDetails[id].timeline.push({ type: 'sideout', team: st.server === 0 ? t1 : t2, player: 0, serveNum: 1, time: Date.now() });
+  if (matchDetails[id].timeline.length > 200) matchDetails[id].timeline.splice(0, matchDetails[id].timeline.length - 200);
+  playBeep();
+  var teamIdx = st.server === 0 ? t1 : t2;
+  if (matchDetails[id].firstServerOfTeam && matchDetails[id].firstServerOfTeam[teamIdx] !== undefined) {
+    var cs = champScores[cat] || { s1: 0, s2: 0 };
+    var teamScore = teamIdx === t1 ? (cs.s1 || 0) : (cs.s2 || 0);
+    var firstServer = matchDetails[id].firstServerOfTeam[teamIdx];
+    st.serverPlayer = (teamScore % 2 === 0) ? firstServer : (1 - firstServer);
+    renderAll();
+    sendStateToSupabase();
+  } else {
+    pendingSideoutPick = { court: courtKey, cat: cat, mid: 'champ', teamIdx: teamIdx };
+    renderAll();
+    sendStateToSupabase();
+  }
+}
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen();
   } else {
