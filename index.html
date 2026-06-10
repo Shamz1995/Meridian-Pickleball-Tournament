@@ -695,21 +695,23 @@
   <div id="page-tournament" class="page">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
       <div>
-        <h2 style="margin-bottom:2px">Preliminary round</h2>
-        <p class="subtitle" style="margin:0">Enter scores for each match. Winner is determined automatically.</p>
-      </div>
-      <button class="btn btn-sm" onclick="showPage('page-setup')" id="btn-edit-teams" ontouchend="showPage('page-setup')">
+      <h2 style="margin-bottom:2px" id="page-heading">Preliminary round</h2>
+      <p class="subtitle" style="margin:0" id="page-subtitle">Enter scores for each match. Winner is determined automatically.</p>
+    </div>
+    <div id="admin-toolbar" style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-sm" onclick="showPage('page-setup')" ontouchend="showPage('page-setup')">
         <i class="ti ti-arrow-left"></i> Edit teams
       </button>
-      <button class="btn btn-sm" onclick="resetTournament()" id="btn-reset" ontouchend="resetTournament()" style="color:var(--danger-text)">
+      <button class="btn btn-sm" onclick="resetTournament()" ontouchend="resetTournament()" style="color:var(--danger-text)">
         <i class="ti ti-refresh"></i> Reset
       </button>
       <button class="btn btn-sm" onclick="printPDF()" ontouchend="printPDF()">
         <i class="ti ti-file-export"></i> Save PDF
       </button>
-      <button class="btn btn-sm" onclick="toggleFullscreen()" ontouchend="toggleFullscreen()">
-        <i class="ti ti-arrows-maximize"></i> Fullscreen
-      </button>
+    </div>
+    <button class="btn btn-sm" onclick="toggleFullscreen()" ontouchend="toggleFullscreen()" style="margin-left:auto">
+      <i class="ti ti-arrows-maximize"></i> Fullscreen
+    </button>
 
     </div>
     <input type="radio" name="tg" id="r-live" class="tab-radio" checked>
@@ -1925,6 +1927,18 @@ function switchTab(tab) {
   document.querySelectorAll('.nav-tab').forEach(function(el) {
     el.classList.toggle('active', el.dataset.tab === tab);
   });
+  var headings = {
+    live: ['Live scoring', 'Real-time scores as they happen.'],
+    schedule: ['Preliminary round', 'Enter scores for each match. Winner is determined automatically.'],
+    championship: ['Championship', 'Final matches to determine the champions.'],
+    standings: ['Standings', 'Team rankings across all matches.'],
+    summary: ['Summary', 'Full tournament results at a glance.']
+  };
+  var h = headings[tab] || ['', ''];
+  var el = document.getElementById('page-heading');
+  if (el) el.textContent = h[0];
+  el = document.getElementById('page-subtitle');
+  if (el) el.textContent = h[1];
 }
 
 function showPage(id) {
@@ -2177,8 +2191,8 @@ document.getElementById('connection-status').style.background = '#3a6b0e';
 
 // Start up
 if (!isAdmin) {
-  document.getElementById('btn-edit-teams').style.display = 'none';
-  document.getElementById('btn-reset').style.display = 'none';
+  var tb = document.getElementById('admin-toolbar');
+  if (tb) tb.style.display = 'none';
 }
 buildSetupUI();
 </script>
