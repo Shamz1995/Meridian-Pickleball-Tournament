@@ -226,6 +226,7 @@
     gap: 4px;
     margin-bottom: 1.5rem;
     overflow-x: auto;
+    padding-bottom: 2px;
   }
 
   .nav-tab {
@@ -242,13 +243,14 @@
     font-family: inherit;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
 
   .nav-tab:hover { background: var(--bg3); color: var(--text); }
   .nav-tab.active {
     background: var(--text);
     color: var(--bg);
-    font-weight: 500;
+    font-weight: 600;
     box-shadow: var(--shadow);
   }
 
@@ -609,36 +611,37 @@
 
   /* Live scoreboard */
   .live-board { text-align: center; padding: 10px 0; }
-  .live-board .round-label { font-size: 13px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .live-board .round-label { font-size: 13px; color: var(--text3); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
   .live-board .round-label span { font-weight: 600; color: var(--text); }
-  .live-court { margin-bottom: 28px; }
-  .live-court h3 { font-size: 22px; color: var(--text2); margin-bottom: 8px; font-weight: 700; }
-  .live-scorebox { display: flex; align-items: center; justify-content: center; gap: 24px; background: var(--bg); border-radius: var(--radius-lg); padding: 32px 36px; border: 1px solid var(--border); }
+  .live-court { margin-bottom: 32px; }
+  .live-court h3 { font-size: 22px; color: var(--text2); margin-bottom: 10px; font-weight: 700; }
+  .live-scorebox { display: flex; align-items: center; justify-content: center; gap: 24px; background: var(--bg); border-radius: var(--radius-lg); padding: 32px 36px; border: 1px solid var(--border); box-shadow: var(--shadow); }
   .live-team { flex: 1; text-align: center; min-width: 160px; }
   .live-team .players-vert { font-size: 28px; font-weight: 700; line-height: 1.3; }
   .live-score { font-size: 48px; font-weight: 700; line-height: 1; min-width: 60px; text-align: center; }
   .live-divider { font-size: 36px; color: var(--text3); font-weight: 300; }
   .live-team.winner .name { color: var(--success-text); }
   .live-team.winner .name::after { content: ' ✓'; font-size: 14px; }
-  .serve-indicator { margin-top: 10px; text-align: center; }
+  .serve-indicator { margin-top: 12px; text-align: center; }
   .serve-badge { display:inline-flex;align-items:center;gap:4px;font-size:14px;font-weight:600;padding:6px 16px;border-radius:20px;border:1px solid; }
   .btn-sideout { border-color:var(--danger-text);color:var(--danger-text); }
   .btn-sideout:hover { background:var(--danger-text);color:#fff; }
-  .match-history { margin-top:10px;padding:8px 12px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--border); }
-  .hist-label { font-size:11px;color:var(--text2);margin-bottom:4px; }
+  .match-history { margin-top:10px;padding:10px 14px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--border);box-shadow:var(--shadow); }
+  .hist-label { font-size:12px;color:var(--text2);margin-bottom:6px; }
   .hist-legend { font-weight:600; }
-  .hist-bars { display:flex;flex-wrap:wrap;gap:3px;align-items:center; }
+  .hist-bars { display:flex;flex-wrap:wrap;gap:4px;align-items:center; }
   .hist-dot { display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid; }
-  .serve-picker { margin:10px 0;padding:10px;background:var(--bg);border-radius:var(--radius-md);border:2px solid var(--info-text);text-align:center; }
-  .serve-picker-label { font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px; }
-  .match-timeline { display:none;margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--radius-md);font-size:11px;max-height:200px;overflow-y:auto; }
-  .match-timeline .tl-item { display:flex;align-items:center;gap:4px;padding:2px 0; }
-  .match-timeline .tl-time { font-size:10px;color:var(--text3);margin-left:auto;white-space:nowrap; }
-  .match-timeline .tl-dot { width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0; }
+  .serve-picker { margin:10px 0;padding:12px 16px;background:var(--bg);border-radius:var(--radius-md);border:2px solid var(--info-text);text-align:center; }
+  .serve-picker-label { font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px; }
+  .match-timeline { display:none;margin-top:10px;padding:10px 14px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--border);font-size:12px;max-height:240px;overflow-y:auto; }
+  .match-timeline .tl-item { display:flex;align-items:center;gap:6px;padding:3px 0; }
+  .match-timeline .tl-item + .tl-item { border-top:0.5px solid var(--border); }
+  .match-timeline .tl-time { font-size:11px;color:var(--text3);margin-left:auto;white-space:nowrap; }
+  .match-timeline .tl-dot { width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0; }
   .match-timeline-wrap { text-align:center; }
   .match-timeline.open { display:block; }
-  .live-empty { text-align: center; padding: 40px 0; color: var(--text3); }
-  .live-empty i { font-size: 32px; display: block; margin-bottom: 10px; }
+  .live-empty { text-align: center; padding: 50px 0; color: var(--text3); }
+  .live-empty i { font-size: 36px; display: block; margin-bottom: 12px; }
   .score-arrow { background:none;border:none;cursor:pointer;padding:4px 14px;font-size:22px;color:var(--text2);border-radius:6px;line-height:1;touch-action:manipulation }
   .score-arrow:hover { background:var(--bg3); }
 
@@ -673,7 +676,7 @@
   <div class="app-header">
     <div class="app-icon"><i class="ti ti-tournament"></i></div>
     <div>
-      <h1>Pickleball tournament</h1>
+      <h1>Meridian Pickleball</h1>
     </div>
     <div id="connection-status" style="margin-left:auto;font-size:11px;background:#686862;color:#fff;padding:4px 10px;border-radius:99px;font-weight:500">Connecting...</div>
   </div>
@@ -694,11 +697,8 @@
 
   <div id="page-tournament" class="page">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-      <div>
-      <h2 style="margin-bottom:2px" id="page-heading">Preliminary round</h2>
-      <p class="subtitle" style="margin:0" id="page-subtitle">Enter scores for each match. Winner is determined automatically.</p>
-    </div>
-    <div id="admin-toolbar" style="display:flex;gap:6px;flex-wrap:wrap">
+      <h2 style="margin:0" id="page-heading">Live scoring</h2>
+      <div id="admin-toolbar" style="display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="showPage('page-setup')" ontouchend="showPage('page-setup')">
         <i class="ti ti-arrow-left"></i> Edit teams
       </button>
@@ -1441,8 +1441,8 @@ function renderLive() {
   if (curIdx === -1 || combinedSlots.length === 0) {
     var allDone = combinedSlots.length > 0;
     html += allDone
-      ? '<div class="live-empty"><i class="ti ti-circle-check"></i>All matches complete! Check the Championship tab.</div>'
-      : '<div class="live-empty"><i class="ti ti-player-play"></i>Generate a tournament to see live scoring.</div>';
+      ? '<div class="live-empty"><i class="ti ti-circle-check"></i>All matches complete!<br><span style="font-size:15px;color:var(--text2)">Head to the Championship tab for finals.</span></div>'
+      : '<div class="live-empty"><i class="ti ti-player-play"></i>No tournament yet<br><span style="font-size:15px;color:var(--text2)">Generate a tournament from the Setup page to get started.</span></div>';
     html += '</div>';
     document.getElementById('tab-live').innerHTML = html;
     return;
@@ -1675,7 +1675,7 @@ function renderSchedule() {
   const allDone = curRoundIdx === -1 && combinedSlots.length > 0;
   html += `</tbody></table>`;
   if (allDone) {
-    html += '<div style="text-align:center;padding:16px 0 8px"><i class="ti ti-circle-check" style="font-size:22px;color:var(--success-text);display:block;margin-bottom:6px"></i><span style="font-size:14px;font-weight:500;color:var(--success-text)">All rounds complete — head to the Championship tab</span></div>';
+    html += '<div style="text-align:center;padding:20px 0 8px"><i class="ti ti-circle-check" style="font-size:24px;color:var(--success-text);display:block;margin-bottom:8px"></i><span style="font-size:15px;font-weight:500;color:var(--success-text)">All rounds complete!</span><br><span style="font-size:13px;color:var(--text2)">Proceed to the Championship tab for finals.</span></div>';
   }
   html += '</div>';
   document.getElementById('tab-schedule').innerHTML = html;
@@ -1689,6 +1689,11 @@ function toggleDetails() {
 }
 
 function renderStandings() {
+  const hasScores = Object.keys(scores.mens).length > 0 || Object.keys(scores.mixed).length > 0;
+  if (!hasScores) {
+    document.getElementById('tab-standings').innerHTML = '<div class="live-empty"><i class="ti ti-chart-bar"></i>No scores yet<br><span style="font-size:15px;color:var(--text2)">Start scoring in the Preliminary Round.</span></div>';
+    return;
+  }
   let html = '<div style="margin-bottom:12px">'
     + '<button class="btn btn-sm" onclick="toggleDetails()"><i class="ti ti-' + (showDetails ? 'eye-off' : 'eye') + '"></i> ' + (showDetails ? 'Hide' : 'Show') + ' score details</button>'
     + '</div>';
@@ -1763,6 +1768,11 @@ function setChampScore(cat, side, value) {
 }
 
 function renderChampionship() {
+  const hasScores = Object.keys(scores.mens).length > 0 || Object.keys(scores.mixed).length > 0;
+  if (!hasScores) {
+    document.getElementById('tab-championship').innerHTML = '<div class="live-empty"><i class="ti ti-trophy-off"></i>No finals yet<br><span style="font-size:15px;color:var(--text2)">Score matches in the Preliminary Round to determine the top 2 teams.</span></div>';
+    return;
+  }
   const cats = [
     { key: 'mens', label: "Men's doubles", pairs: 3 },
     { key: 'mixed', label: "Mixed doubles", pairs: 2 }
@@ -1778,7 +1788,7 @@ function renderChampionship() {
     html += `<div class="champ-block"><h3>${label} Championship</h3>`;
 
     if (stats[t1].wins === 0 && stats[t2].wins === 0) {
-      html += `<div style="text-align:center;padding:16px 0"><i class="ti ti-trophy-off" style="font-size:24px;color:var(--text3);display:block;margin-bottom:8px"></i><p style="font-size:14px;color:var(--text3)">Score some matches in the Preliminary Round first</p></div></div>`;
+      html += `<div style="text-align:center;padding:24px 0"><i class="ti ti-trophy-off" style="font-size:28px;color:var(--text3);display:block;margin-bottom:10px"></i><p style="font-size:14px;color:var(--text3)">Score matches in the Preliminary Round first</p><p style="font-size:12px;color:var(--text3);margin-top:4px">The top 2 teams per category will compete here.</p></div></div>`;
       return;
     }
 
@@ -1866,6 +1876,11 @@ function renderChampionship() {
 }
 
 function renderSummary() {
+  const hasScores = Object.keys(scores.mens).length > 0 || Object.keys(scores.mixed).length > 0;
+  if (!hasScores) {
+    document.getElementById('tab-summary').innerHTML = '<div class="live-empty"><i class="ti ti-report"></i>No results yet<br><span style="font-size:15px;color:var(--text2)">Scores will appear here once matches are played.</span></div>';
+    return;
+  }
   const catLabels = { mens: "Men's", mixed: "Mixed" };
   let html = '<div style="margin-bottom:12px">'
     + '<button class="btn btn-sm" onclick="toggleDetails()"><i class="ti ti-' + (showDetails ? 'eye-off' : 'eye') + '"></i> ' + (showDetails ? 'Hide' : 'Show') + ' score details</button>'
@@ -1928,17 +1943,14 @@ function switchTab(tab) {
     el.classList.toggle('active', el.dataset.tab === tab);
   });
   var headings = {
-    live: ['Live scoring', 'Real-time scores as they happen.'],
-    schedule: ['Preliminary round', 'Enter scores for each match. Winner is determined automatically.'],
-    championship: ['Championship', 'Final matches to determine the champions.'],
-    standings: ['Standings', 'Team rankings across all matches.'],
-    summary: ['Summary', 'Full tournament results at a glance.']
+    live: 'Live scoring',
+    schedule: 'Preliminary round',
+    championship: 'Championship',
+    standings: 'Standings',
+    summary: 'Summary'
   };
-  var h = headings[tab] || ['', ''];
   var el = document.getElementById('page-heading');
-  if (el) el.textContent = h[0];
-  el = document.getElementById('page-subtitle');
-  if (el) el.textContent = h[1];
+  if (el) el.textContent = headings[tab] || '';
 }
 
 function showPage(id) {
