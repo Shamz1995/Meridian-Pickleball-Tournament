@@ -527,11 +527,12 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow);
+    border: 0.5px solid var(--border2);
   }
 
   .schedule-tbl th,
   .schedule-tbl td {
-    border: 0.5px solid var(--border);
+    border: 0.5px solid var(--border2);
     padding: 12px;
     vertical-align: top;
     transition: background 0.15s;
@@ -543,6 +544,7 @@
     font-weight: 500;
     color: var(--text2);
     text-align: left;
+    border-bottom: 1px solid var(--border2);
   }
 
   .schedule-tbl tbody tr:nth-child(even) td { background: var(--bg2); }
