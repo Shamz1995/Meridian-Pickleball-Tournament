@@ -1453,15 +1453,14 @@ function renderLive() {
     if (!aDone || !bDone) { curIdx = i; break; }
   }
 
-  if (curIdx === -1 || combinedSlots.length === 0) {
-    var allDone = combinedSlots.length > 0;
-    html += allDone
-      ? '<div class="live-empty"><i class="ti ti-circle-check"></i>All matches complete!<br><span style="font-size:15px;color:var(--text2)">Head to the Championship tab for finals.</span></div>'
-      : '<div class="live-empty"><i class="ti ti-player-play"></i>No tournament yet<br><span style="font-size:15px;color:var(--text2)">Generate a tournament from the Setup page to get started.</span></div>';
+  if (combinedSlots.length === 0) {
+    html += '<div class="live-empty"><i class="ti ti-player-play"></i>No tournament yet<br><span style="font-size:15px;color:var(--text2)">Generate a tournament from the Setup page to get started.</span></div>';
     html += '</div>';
     document.getElementById('tab-live').innerHTML = html;
     return;
   }
+
+  if (curIdx === -1) curIdx = combinedSlots.length - 1;
 
   var slot = combinedSlots[curIdx];
   html += '<div class="round-label">Current Round <span>R' + (curIdx + 1) + '</span></div>';
