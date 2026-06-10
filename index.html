@@ -1083,6 +1083,7 @@ function setScoreLive(cat, mid, side, value) {
 
 function changeScore(cat, mid, side, delta) {
   if (!scores[cat][mid]) scores[cat][mid] = { s1: null, s2: null };
+  if (delta > 0 && isMatchDone(cat, mid)) return;
   var match = getMatchForCat(cat, mid);
   if (!match) return;
   var court = getCourtForCat(cat, mid);
@@ -1238,8 +1239,7 @@ function recordServeChange(cat, mid, court, server, serveNum, playerIdx) {
 
 function startCourtTimer(court, cat, mid) {
   if (!courtTimers[court]) courtTimers[court] = { startTime: null };
-  courtHistory[court] = [];
-  courtGameState[court] = { server: null, serverPlayer: null, serveNum: 1 };
+  if (!courtGameState[court]) courtGameState[court] = { server: null, serverPlayer: null, serveNum: 1 };
   pendingServePick = { phase: 'team', court: court, cat: cat, mid: mid };
   renderLive();
 }
@@ -1270,6 +1270,7 @@ function beginMatch(teamIdx, playerIdx) {
   pendingServePick = null;
   var court = p.court, cat = p.cat, mid = p.mid;
   var match = getMatchForCat(cat, mid);
+  courtHistory[court] = [];
   var st = courtGameState[court];
   st.server = p.team1.teamIdx === match.t1 ? 0 : 1;
   st.serverPlayer = p.team1.playerIdx;
