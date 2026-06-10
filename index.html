@@ -1080,6 +1080,14 @@ function setScore(cat, mid, side, value) {
   if (!scores[cat][mid]) scores[cat][mid] = { s1: null, s2: null };
   const v = value === '' ? null : parseInt(value);
   scores[cat][mid][side] = (v !== null && !isNaN(v) && v >= 0) ? v : null;
+  const other = side === 's1' ? 's2' : 's1';
+  if (v !== null) {
+    if (v >= 11 && scores[cat][mid][other] === null) {
+      scores[cat][mid][other] = 0;
+    } else if (v < 11 && scores[cat][mid][other] === null) {
+      scores[cat][mid][other] = 11;
+    }
+  }
   renderAll();
 }
 
