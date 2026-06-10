@@ -754,6 +754,7 @@ let combinedSlots = [];
 
 let champPairs = { mens: {}, mixed: {} };
 let champScores = { mens: null, mixed: null };
+let champLocked = { mens: false, mixed: false };
 let courtTimers = { courtA: { startTime: null }, courtB: { startTime: null } };
 let courtGameState = { courtA: { server: null, serverPlayer: null, serveNum: 1 }, courtB: { server: null, serverPlayer: null, serveNum: 1 } };
 let courtHistory = { courtA: [], courtB: [] };
@@ -1691,6 +1692,16 @@ function renderLiveChampionship() {
     var stats = computeStats(cat);
     if (stats[t1].wins === 0 && stats[t2].wins === 0) return '';
 
+    if (!champLocked[cat]) {
+      var c1 = teams[t1].color, c2 = teams[t2].color;
+      html += '<div class="live-court" style="background:linear-gradient(135deg, ' + c1 + '08 0%, var(--bg2) 40%, ' + c2 + '08 100%);border-top:3px solid ' + c1 + '55;border-bottom:3px solid ' + c2 + '55;text-align:center;padding:32px 20px">'
+        + '<h3>' + label + '</h3>'
+        + '<div style="margin-top:16px;font-size:20px;color:var(--text2)"><i class="ti ti-hourglass" style="font-size:28px;display:block;margin-bottom:10px"></i>Waiting for players to be selected...</div>'
+        + '<div style="margin-top:8px;font-size:14px;color:var(--text3)">Go to the Championship tab to choose pairs and lock them in.</div>'
+        + '</div>';
+      return;
+    }
+
     if (!champPairs[cat]) champPairs[cat] = {};
     if (!Array.isArray(champPairs[cat][t1])) champPairs[cat][t1] = [0, 1];
     if (!Array.isArray(champPairs[cat][t2])) champPairs[cat][t2] = [0, 1];
@@ -2118,6 +2129,12 @@ function setChampScore(cat, side, value) {
   renderAll();
 }
 
+function lockChampPlayers(cat) {
+  champLocked[cat] = true;
+  renderAll();
+  sendStateToSupabase();
+}
+
 function renderChampionship() {
   const hasScores = Object.keys(scores.mens).length > 0 || Object.keys(scores.mixed).length > 0;
   if (!hasScores) {
@@ -2202,7 +2219,10 @@ function renderChampionship() {
         ${playerSelectHtml(t2, cp2)}
         <div style="font-size:11px;color:var(--text3);margin-top:4px">${stats[t2].wins}W-${stats[t2].losses}L</div>
       </div>
-    </div>`;
+    </div>`
+      + (isAdmin && !champLocked[cat] ? '<div style="text-align:center;margin:12px 0"><button class="btn" onclick="lockChampPlayers(\'' + cat + '\')" style="padding:10px 28px;font-size:15px"><i class="ti ti-lock"></i> Lock players &amp; start match</button></div>' : '')
+      + (champLocked[cat] ? '<div style="text-align:center;margin:8px 0;font-size:13px;color:var(--success-text)"><i class="ti ti-lock"></i> Players locked — head to the Live tab to score</div>' : '')
+      ;
 
     const cs = champScores[cat] || { s1: null, s2: null };
     const sv1 = cs.s1 !== null ? cs.s1 : '';
@@ -2313,7 +2333,7 @@ function showPage(id) {
 function resetTournament() {
   if (!isAdmin || !confirm('Reset tournament? All scores and schedule will be lost.')) return;
   teams = []; schedule = { mens: [], mixed: [] }; scores = { mens: {}, mixed: {} };
-  combinedSlots = []; champPairs = { mens: {}, mixed: {} }; champScores = { mens: null, mixed: null }; courtTimers = { courtA: { startTime: null }, courtB: { startTime: null } }; courtGameState = { courtA: { server: null, serverPlayer: null, serveNum: 1 }, courtB: { server: null, serverPlayer: null, serveNum: 1 } }; courtHistory = { courtA: [], courtB: [] }; matchDetails = {}; pendingServePick = null; pendingSideoutPick = null;
+  combinedSlots = []; champPairs = { mens: {}, mixed: {} }; champScores = { mens: null, mixed: null }; champLocked = { mens: false, mixed: false }; courtTimers = { courtA: { startTime: null }, courtB: { startTime: null } }; courtGameState = { courtA: { server: null, serverPlayer: null, serveNum: 1 }, courtB: { server: null, serverPlayer: null, serveNum: 1 } }; courtHistory = { courtA: [], courtB: [] }; matchDetails = {}; pendingServePick = null; pendingSideoutPick = null;
   document.getElementById('page-tournament').classList.remove('active');
   document.getElementById('page-setup').classList.add('active');
   sendStateToSupabase();
@@ -2470,6 +2490,7 @@ function applyState(d) {
   combinedSlots = d.combinedSlots || [];
   champPairs = d.champPairs || { mens: {}, mixed: {} };
   champScores = d.champScores || { mens: null, mixed: null };
+  champLocked = d.champLocked || { mens: false, mixed: false };
   courtTimers = d.courtTimers || { courtA: { startTime: null }, courtB: { startTime: null } };
   courtGameState = d.courtGameState || { courtA: { server: null, serverPlayer: null, serveNum: 1 }, courtB: { server: null, serverPlayer: null, serveNum: 1 } };
   courtHistory = d.courtHistory || { courtA: [], courtB: [] };
@@ -2499,7 +2520,7 @@ async function fetchState() {
 
 async function sendStateToSupabase() {
   try {
-    var state = { teams: teams, schedule: schedule, scores: scores, combinedSlots: combinedSlots, champPairs: champPairs, champScores: champScores, courtTimers: courtTimers, courtGameState: courtGameState, courtHistory: courtHistory, matchDetails: matchDetails };
+    var state = { teams: teams, schedule: schedule, scores: scores, combinedSlots: combinedSlots, champPairs: champPairs, champScores: champScores, champLocked: champLocked, courtTimers: courtTimers, courtGameState: courtGameState, courtHistory: courtHistory, matchDetails: matchDetails };
     await fetch(SUPABASE_URL + '/rest/v1/tournament_state?id=eq.1', {
       method: 'PATCH',
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
