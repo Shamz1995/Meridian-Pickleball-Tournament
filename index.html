@@ -1688,12 +1688,15 @@ function renderSchedule() {
 }
 
 function fitNames() {
+  const tab = document.getElementById('tab-schedule');
+  if (!tab || getComputedStyle(tab).display === 'none') return;
   requestAnimationFrame(() => {
     document.querySelectorAll('.tp-name').forEach(el => {
       el.style.fontSize = '';
       const cell = el.closest('td') || el.closest('th');
       if (!cell) return;
       const maxW = cell.clientWidth - 24;
+      if (maxW <= 40) return;
       let fs = parseInt(getComputedStyle(el).fontSize) || 15;
       el.style.fontSize = fs + 'px';
       while (el.offsetWidth > maxW && fs > 8) {
@@ -1974,6 +1977,7 @@ function switchTab(tab) {
   };
   var el = document.getElementById('page-heading');
   if (el) el.textContent = headings[tab] || '';
+  if (tab === 'schedule') fitNames();
 }
 
 function showPage(id) {
