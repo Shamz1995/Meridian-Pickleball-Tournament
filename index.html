@@ -574,6 +574,9 @@
     padding: 16px 20px;
     vertical-align: top;
   }
+  .match-cell[draggable="true"] { cursor: grab; }
+  .match-cell[draggable="true"]:active { cursor: grabbing; }
+  .match-cell.drag-over { outline: 2px dashed #D13161; outline-offset: -2px; }
 
   .match-cell.done { background: var(--bg); }
   .match-cell.pending { background: var(--bg); }
@@ -1396,8 +1399,8 @@ function isMatchDone(cat, mid) {
   return a >= 11 || b >= 11;
 }
 
-function matchCell(match, cat) {
-  if (!match) return '<td class="match-cell" style="text-align:center;color:var(--text3);font-size:14px;">—</td>';
+function matchCell(match, cat, roundIdx) {
+  if (!match) return '<td class="match-cell empty-match" draggable="false" data-round="' + roundIdx + '" data-cat="' + cat + '" style="text-align:center;color:var(--text3);font-size:14px;">—</td>';
   const e = scores[cat][match.id] || { s1: null, s2: null };
   const done = isMatchDone(cat, match.id);
   const sv1 = e.s1 !== null ? e.s1 : '';
@@ -1407,7 +1410,7 @@ function matchCell(match, cat) {
   if (done) { t1won = e.s1 > e.s2; t2won = e.s2 > e.s1; }
   var p1 = getPlayers(cat, match.t1, match.p1);
   var p2 = getPlayers(cat, match.t2, match.p2);
-  return '<td class="match-cell ' + (done ? 'done' : 'pending') + '">'
+  return '<td class="match-cell ' + (done ? 'done' : 'pending') + '" draggable="true" data-round="' + roundIdx + '" data-cat="' + cat + '">'
     + '<div class="match-teams">' + statusIcon
       + '<div class="match-team"><div class="team-players-vert"><span class="tp-name" style="color:' + teams[match.t1].color + '">' + esc(p1[0]) + '</span><span class="tp-name" style="color:' + teams[match.t1].color + '">' + esc(p1[1]) + '</span></div></div>'
       + '<span class="match-vs">vs</span>'
@@ -2068,8 +2071,8 @@ function renderSchedule() {
     const overflowBadge = slot.overflow ? '<span style="font-size:10px;color:var(--warning-text);display:block">no rest</span>' : '';
     html += `<tr${isCurrent ? ' class="round-current"' : ''}>
       <td class="round-cell">${roundLabel}${overflowBadge}${currentBadge}</td>
-      ${matchCell(slot.courtA, 'mens')}
-      ${matchCell(slot.courtB, 'mixed')}
+      ${matchCell(slot.courtA, 'mens', si)}
+      ${matchCell(slot.courtB, 'mixed', si)}
     </tr>`;
   });
 
@@ -2081,6 +2084,52 @@ function renderSchedule() {
   html += '</div>';
   document.getElementById('tab-schedule').innerHTML = html;
   fitNames();
+  if (isAdmin) setupDragDrop();
+}
+
+function setupDragDrop() {
+  var tbl = document.querySelector('.schedule-tbl');
+  if (!tbl) return;
+  var dragged = null;
+  tbl.addEventListener('dragstart', function(e) {
+    var cell = e.target.closest('.match-cell[draggable="true"]');
+    if (!cell) return;
+    dragged = cell;
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  tbl.addEventListener('dragover', function(e) {
+    var cell = e.target.closest('.match-cell');
+    if (!cell || !dragged) return;
+    if (cell.dataset.cat !== dragged.dataset.cat) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    tbl.querySelectorAll('.drag-over').forEach(function(c) { c.classList.remove('drag-over'); });
+    cell.classList.add('drag-over');
+  });
+  tbl.addEventListener('dragleave', function(e) {
+    var cell = e.target.closest('.match-cell');
+    if (cell) cell.classList.remove('drag-over');
+  });
+  tbl.addEventListener('drop', function(e) {
+    tbl.querySelectorAll('.drag-over').forEach(function(c) { c.classList.remove('drag-over'); });
+    var target = e.target.closest('.match-cell');
+    if (!dragged || !target) return;
+    if (target.dataset.cat !== dragged.dataset.cat) return;
+    var srcRound = parseInt(dragged.dataset.round);
+    var dstRound = parseInt(target.dataset.round);
+    if (srcRound === dstRound) return;
+    var cat = dragged.dataset.cat;
+    var srcKey = cat === 'mens' ? 'courtA' : 'courtB';
+    var tmp = combinedSlots[srcRound][srcKey];
+    combinedSlots[srcRound][srcKey] = combinedSlots[dstRound][srcKey];
+    combinedSlots[dstRound][srcKey] = tmp;
+    sendStateToSupabase();
+    renderAll();
+  });
+  tbl.addEventListener('dragend', function() {
+    tbl.querySelectorAll('.drag-over').forEach(function(c) { c.classList.remove('drag-over'); });
+    dragged = null;
+  });
 }
 
 function fitNames() {
